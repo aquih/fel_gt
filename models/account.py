@@ -31,10 +31,37 @@ class AccountInvoice(models.Model):
     resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL')
 
+    def lineas_negativas(self, invoice_line_ids):
+        linea_negativa = False
+        for linea in invoice_line_ids:
+            if linea.price_unit < 0:
+                linea_negativa = True
+        return linea_negativa
+
+
+    def nuevas_lineas(self, invoice_line_ids):
+        lineas_positivas = []
+        precio_total_descuento = 0
+
+        for linea in invoice_line_ids:
+            if linea.price_unit > 0:
+                lineas_positivas.append(linea)
+            elif linea.price_unit < 0:
+                precio_total_descuento += linea.price_total
+                linea.price_unit = 0
+
+        precio_restar = (precio_total_descuento / len(lineas_positivas))
+        for linea in lineas_positivas:
+            descuento = (precio_restar / linea.price_total) * 100
+            linea.discount = (descuento) * -1
+        return True
+
     def dte_documento(self):
         self.ensure_one()
         factura = self
+        logging.warn('entra1')
         if not factura.firma_fel and factura.amount_total != 0:
+            logging.warn('entra')
             attr_qname = etree.QName("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation")
 
             NSMAP = {
@@ -81,12 +108,14 @@ class AccountInvoice(models.Model):
             fecha = fields.Date.from_string(factura.date_invoice).strftime('%Y-%m-%d')
             hora = "00:00:00-06:00"
             fecha_hora = fecha+'T'+hora
-            
+
             DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel)
             if factura.tipo_gasto == 'importacion':
                 DatosGenerales.attrib['Exp'] = "SI"
 
-            Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
+            # Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
+
+            Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat, NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
             DireccionEmisor = etree.SubElement(Emisor, DTE_NS+"DireccionEmisor")
             Direccion = etree.SubElement(DireccionEmisor, DTE_NS+"Direccion")
             Direccion.text = factura.journal_id.direccion.street or 'Ciudad'
@@ -138,6 +167,9 @@ class AccountInvoice(models.Model):
             gran_total = 0
             gran_total_impuestos = 0
             cantidad_impuestos = 0
+            if self.lineas_negativas(factura.invoice_line_ids):
+                self.nuevas_lineas(factura.invoice_line_ids)
+
             for linea in factura.invoice_line_ids:
 
                 if linea.quantity * linea.price_unit == 0:
@@ -258,7 +290,7 @@ class AccountInvoice(models.Model):
                     RetencionIVA.text = str(total_iva_retencion)
                     TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
                     TotalMenosRetenciones.text = str(factura.amount_total)
-                    
+
             return GTDocumento
 
     def dte_anulacion(self):
@@ -272,7 +304,7 @@ class AccountInvoice(models.Model):
 
         DTE_NS = "{http://www.sat.gob.gt/dte/fel/0.1.0}"
         DS_NS = "{http://www.w3.org/2000/09/xmldsig#}"
-    
+
         if factura.firma_fel:
 
             tipo_documento_fel = factura.journal_id.tipo_documento_fel
@@ -288,14 +320,14 @@ class AccountInvoice(models.Model):
             fecha = fields.Date.from_string(factura.date_invoice).strftime('%Y-%m-%d')
             hora = "00:00:00-06:00"
             fecha_hora = fecha+'T'+hora
-            
+
             fecha_hoy_hora = fields.Datetime.context_timestamp(factura, timestamp=datetime.now()).strftime('%Y-%m-%dT%H:%M:%S-06:00')
 
             GTAnulacionDocumento = etree.Element(DTE_NS+"GTAnulacionDocumento", {}, Version="0.1", nsmap=NSMAP)
             SAT = etree.SubElement(GTAnulacionDocumento, DTE_NS+"SAT")
             AnulacionDTE = etree.SubElement(SAT, DTE_NS+"AnulacionDTE", ID="DatosCertificados")
             DatosGenerales = etree.SubElement(AnulacionDTE, DTE_NS+"DatosGenerales", ID="DatosAnulacion", NumeroDocumentoAAnular=factura.firma_fel, NITEmisor=factura.company_id.vat.replace("-",""), IDReceptor=nit_receptor, FechaEmisionDocumentoAnular=fecha_hora, FechaHoraAnulacion=fecha_hoy_hora, MotivoAnulacion=factura.comment or "Error")
-            
+
             return GTAnulacionDocumento
 
 class AccountJournal(models.Model):
