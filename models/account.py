@@ -39,7 +39,7 @@ class AccountInvoice(models.Model):
         return linea_negativa
 
 
-    def nuevas_lineas(self, invoice_line_ids):
+    def descuento_lineas(self, invoice_line_ids):
         lineas_positivas = []
         precio_total_descuento = 0
 
@@ -59,9 +59,9 @@ class AccountInvoice(models.Model):
     def dte_documento(self):
         self.ensure_one()
         factura = self
-        logging.warn('entra1')
+
         if not factura.firma_fel and factura.amount_total != 0:
-            logging.warn('entra')
+
             attr_qname = etree.QName("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation")
 
             NSMAP = {
@@ -113,7 +113,7 @@ class AccountInvoice(models.Model):
             if factura.tipo_gasto == 'importacion':
                 DatosGenerales.attrib['Exp'] = "SI"
 
-            # Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
+            Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
 
             Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat, NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
             DireccionEmisor = etree.SubElement(Emisor, DTE_NS+"DireccionEmisor")
@@ -168,7 +168,7 @@ class AccountInvoice(models.Model):
             gran_total_impuestos = 0
             cantidad_impuestos = 0
             if self.lineas_negativas(factura.invoice_line_ids):
-                self.nuevas_lineas(factura.invoice_line_ids)
+                self.descuento_lineas(factura.invoice_line_ids)
 
             for linea in factura.invoice_line_ids:
 
