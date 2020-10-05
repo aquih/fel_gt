@@ -31,29 +31,21 @@ class AccountInvoice(models.Model):
     resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL')
 
-    def lineas_negativas(self, invoice_line_ids):
-        linea_negativa = False
-        for linea in invoice_line_ids:
-            if linea.price_unit < 0:
-                linea_negativa = True
-        return linea_negativa
-
-
     def descuento_lineas(self, invoice_line_ids):
         lineas_positivas = []
         precio_total_descuento = 0
+        precio_total_positivo = 0
 
         for linea in invoice_line_ids:
             if linea.price_unit > 0:
                 lineas_positivas.append(linea)
+                precio_total_positivo += linea.price_total
             elif linea.price_unit < 0:
                 precio_total_descuento += linea.price_total
                 linea.price_unit = 0
 
-        precio_restar = (precio_total_descuento / len(lineas_positivas))
         for linea in lineas_positivas:
-            descuento = (precio_restar / linea.price_total) * 100
-            linea.discount = (descuento) * -1
+            linea.discount = ((precio_total_descuento / precio_total_positivo)*100)*-1
         return True
 
     def dte_documento(self):
@@ -165,8 +157,7 @@ class AccountInvoice(models.Model):
             gran_total = 0
             gran_total_impuestos = 0
             cantidad_impuestos = 0
-            if self.lineas_negativas(factura.invoice_line_ids):
-                self.descuento_lineas(factura.invoice_line_ids)
+            self.descuento_lineas(factura.invoice_line_ids)
 
             for linea in factura.invoice_line_ids:
 
