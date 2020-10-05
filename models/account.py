@@ -114,8 +114,6 @@ class AccountInvoice(models.Model):
                 DatosGenerales.attrib['Exp'] = "SI"
 
             Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
-
-            Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA="GEN", CodigoEstablecimiento=factura.journal_id.codigo_establecimiento_fel, CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat, NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
             DireccionEmisor = etree.SubElement(Emisor, DTE_NS+"DireccionEmisor")
             Direccion = etree.SubElement(DireccionEmisor, DTE_NS+"Direccion")
             Direccion.text = factura.journal_id.direccion.street or 'Ciudad'
