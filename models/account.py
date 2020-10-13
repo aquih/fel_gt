@@ -32,7 +32,7 @@ class AccountMove(models.Model):
     documento_xml_fel_name = fields.Char('Nombre doc xml FEL', default='documento_xml_fel.xml', size=32)
     resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
     resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
-    certificador_fel = fields.Char('Certificador FEL', related='account_move.certificador_fel')
+    certificador_fel = fields.Char('Certificador FEL', copy=False)
 
     def descuento_lineas(self, invoice_line_ids):
         lineas_positivas = []
@@ -181,7 +181,7 @@ class AccountMove(models.Model):
                 Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
                 Cantidad.text = str(linea.quantity)
                 UnidadMedida = etree.SubElement(Item, DTE_NS+"UnidadMedida")
-                UnidadMedida.text = linea.uom_id.name[0:3]
+                UnidadMedida.text = linea.product_uom_id.name[0:3] if linea.product_uom_id else 'UNI'
                 Descripcion = etree.SubElement(Item, DTE_NS+"Descripcion")
                 Descripcion.text = linea.name
                 PrecioUnitario = etree.SubElement(Item, DTE_NS+"PrecioUnitario")
@@ -200,11 +200,11 @@ class AccountMove(models.Model):
                     if factura.tipo_gasto == 'importacion' or ( tipo_documento_fel in ['NDEB', 'NCRE'] and factura.factura_original_id and factura.factura_original_id.tipo_gasto == 'importacion' ):
                         CodigoUnidadGravable.text = "2"
                     MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
-                    MontoGravable.text = '{:.2f}'.format(factura.currency_id.round(total_linea_base))
+                    MontoGravable.text = '{:.6f}'.format(total_linea_base)
                     MontoImpuesto = etree.SubElement(Impuesto, DTE_NS+"MontoImpuesto")
-                    MontoImpuesto.text = '{:.2f}'.format(factura.currency_id.round(total_impuestos))
+                    MontoImpuesto.text = '{:.6f}'.format(total_impuestos)
                 Total = etree.SubElement(Item, DTE_NS+"Total")
-                Total.text = '{:.2f}'.format(factura.currency_id.round(total_linea))
+                Total.text = '{:.2f}'.format(total_linea)
 
                 gran_total += factura.currency_id.round(total_linea)
                 gran_subtotal += factura.currency_id.round(total_linea_base)
@@ -226,34 +226,38 @@ class AccountMove(models.Model):
                 Complementos = etree.SubElement(DatosEmision, DTE_NS+"Complementos")
 
                 if tipo_documento_fel in ['NDEB', 'NCRE']:
-                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="ReferenciasNota", NombreComplemento="Nota de Credito" if tipo_documento_fel == 'NCRE' else "Nota de Debito", URIComplemento="text")
+                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="ReferenciasNota", NombreComplemento="Nota de Credito" if tipo_documento_fel == 'NCRE' else "Nota de Debito", URIComplemento="http://www.sat.gob.gt/face2/ComplementoReferenciaNota/0.1.0")
                     if factura.factura_original_id.numero_fel:
                         ReferenciasNota = etree.SubElement(Complemento, CNO_NS+"ReferenciasNota", FechaEmisionDocumentoOrigen=str(factura.factura_original_id.invoice_date), MotivoAjuste="-", NumeroAutorizacionDocumentoOrigen=factura.factura_original_id.firma_fel, NumeroDocumentoOrigen=factura.factura_original_id.numero_fel, SerieDocumentoOrigen=factura.factura_original_id.serie_fel, Version="0.0", nsmap=NSMAP_REF)
                     else:
                         ReferenciasNota = etree.SubElement(Complemento, CNO_NS+"ReferenciasNota", RegimenAntiguo="Antiguo", FechaEmisionDocumentoOrigen=str(factura.factura_original_id.invoice_date), MotivoAjuste="-", NumeroAutorizacionDocumentoOrigen=factura.factura_original_id.firma_fel, NumeroDocumentoOrigen=factura.factura_original_id.ref.split("-")[1], SerieDocumentoOrigen=factura.factura_original_id.ref.split("-")[0], Version="0.0", nsmap=NSMAP_REF)
 
                 if tipo_documento_fel in ['FCAM']:
-                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FCAM", NombreComplemento="AbonosFacturaCambiaria", URIComplemento="#AbonosFacturaCambiaria")
+                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FCAM", NombreComplemento="AbonosFacturaCambiaria", URIComplemento="http://www.sat.gob.gt/dte/fel/CompCambiaria/0.1.0")
                     AbonosFacturaCambiaria = etree.SubElement(Complemento, CFC_NS+"AbonosFacturaCambiaria", Version="1", nsmap=NSMAP_ABONO)
                     Abono = etree.SubElement(AbonosFacturaCambiaria, CFC_NS+"Abono")
                     NumeroAbono = etree.SubElement(Abono, CFC_NS+"NumeroAbono")
                     NumeroAbono.text = "1"
                     FechaVencimiento = etree.SubElement(Abono, CFC_NS+"FechaVencimiento")
-                    FechaVencimiento.text = str(factura.date_due)
+                    FFechaVencimiento.text = str(factura.date_due)
                     MontoAbono = etree.SubElement(Abono, CFC_NS+"MontoAbono")
                     MontoAbono.text = '{:.2f}'.format(factura.currency_id.round(gran_total))
 
                 if tipo_documento_fel in ['FACT', 'FCAM'] and factura.tipo_gasto == 'importacion':
-                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="text", NombreComplemento="text", URIComplemento="text")
+                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="text", NombreComplemento="text", URIComplemento="http://www.sat.gob.gt/face2/ComplementoExportaciones/0.1.0")
                     Exportacion = etree.SubElement(Complemento, CEX_NS+"Exportacion", Version="1", nsmap=NSMAP_EXP)
                     NombreConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"NombreConsignatarioODestinatario")
                     NombreConsignatarioODestinatario.text = factura.consignatario_fel.name if factura.consignatario_fel else "-"
                     DireccionConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"DireccionConsignatarioODestinatario")
                     DireccionConsignatarioODestinatario.text = factura.consignatario_fel.street or "-" if factura.consignatario_fel else "-"
+                    CodigoConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"CodigoConsignatarioODestinatario")
+                    CodigoConsignatarioODestinatario.text = factura.consignatario_fel.ref or "-" if factura.consignatario_fel else "-"
                     NombreComprador = etree.SubElement(Exportacion, CEX_NS+"NombreComprador")
                     NombreComprador.text = factura.comprador_fel.name if factura.comprador_fel else "-"
                     DireccionComprador = etree.SubElement(Exportacion, CEX_NS+"DireccionComprador")
                     DireccionComprador.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
+                    CodigoComprador = etree.SubElement(Exportacion, CEX_NS+"CodigoComprador")
+                    CodigoComprador.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
                     INCOTERM.text = factura.incoterm_fel or "-"
                     NombreExportador = etree.SubElement(Exportacion, CEX_NS+"NombreExportador")
@@ -269,7 +273,7 @@ class AccountMove(models.Model):
                         if impuesto[1] > 0:
                             total_iva_retencion += impuesto[1]
 
-                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="text", NombreComplemento="text", URIComplemento="text")
+                    Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FacturaEspecial", NombreComplemento="FacturaEspecial", URIComplemento="http://www.sat.gob.gt/face2/ComplementoFacturaEspecial/0.1.0")
                     RetencionesFacturaEspecial = etree.SubElement(Complemento, CFE_NS+"RetencionesFacturaEspecial", Version="1", nsmap=NSMAP_FE)
                     RetencionISR = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"RetencionISR")
                     RetencionISR.text = str(total_isr)
