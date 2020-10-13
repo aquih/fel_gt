@@ -34,6 +34,23 @@ class AccountMove(models.Model):
     resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', related='account_move.certificador_fel')
 
+    def descuento_lineas(self, invoice_line_ids):
+        lineas_positivas = []
+        precio_total_descuento = 0
+        precio_total_positivo = 0
+
+        for linea in invoice_line_ids:
+            if linea.price_unit > 0:
+                lineas_positivas.append(linea)
+                precio_total_positivo += linea.price_total
+            elif linea.price_unit < 0:
+                precio_total_descuento += linea.price_total
+                linea.price_unit = 0
+
+        for linea in lineas_positivas:
+            linea.discount = ((precio_total_descuento / precio_total_positivo)*100)*-1
+        return True
+
     def dte_documento(self):
         self.ensure_one()
         factura = self
@@ -139,6 +156,8 @@ class AccountMove(models.Model):
             gran_total = 0
             gran_total_impuestos = 0
             cantidad_impuestos = 0
+            self.descuento_lineas(factura.invoice_line_ids)
+
             for linea in factura.invoice_line_ids:
 
                 if linea.quantity * linea.price_unit == 0:
@@ -296,7 +315,7 @@ class AccountMove(models.Model):
             # DatosEmision.remove(SingatureTemp)
 
             # xml_con_firma = etree.tostring(GTDocumento, encoding="utf-8").decode("utf-8")
-                    
+
             return GTDocumento
 
     def dte_anulacion(self):
@@ -310,7 +329,7 @@ class AccountMove(models.Model):
 
         DTE_NS = "{http://www.sat.gob.gt/dte/fel/0.1.0}"
         DS_NS = "{http://www.w3.org/2000/09/xmldsig#}"
-    
+
         if factura.firma_fel:
 
             tipo_documento_fel = factura.journal_id.tipo_documento_fel
@@ -326,14 +345,14 @@ class AccountMove(models.Model):
             fecha = fields.Date.from_string(factura.invoice_date).strftime('%Y-%m-%d')
             hora = "00:00:00-06:00"
             fecha_hora = fecha+'T'+hora
-            
+
             fecha_hoy_hora = fields.Date.context_today(factura).strftime('%Y-%m-%dT%H:%M:%S')
 
             GTAnulacionDocumento = etree.Element(DTE_NS+"GTAnulacionDocumento", {}, Version="0.1", nsmap=NSMAP)
             SAT = etree.SubElement(GTAnulacionDocumento, DTE_NS+"SAT")
             AnulacionDTE = etree.SubElement(SAT, DTE_NS+"AnulacionDTE", ID="DatosCertificados")
             DatosGenerales = etree.SubElement(AnulacionDTE, DTE_NS+"DatosGenerales", ID="DatosAnulacion", NumeroDocumentoAAnular=factura.firma_fel, NITEmisor=factura.company_id.vat.replace("-",""), IDReceptor=nit_receptor, FechaEmisionDocumentoAnular=fecha_hora, FechaHoraAnulacion=fecha_hoy_hora, MotivoAnulacion=factura.narration or "Error")
-            
+
             return GTAnulacionDocumento
 
 class AccountJournal(models.Model):
