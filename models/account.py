@@ -361,14 +361,6 @@ class AccountMove(models.Model):
 
             return GTAnulacionDocumento
 
-# class AccountMoveLine(models.Model):
-#     _inherit = "account.move.line"
-#
-#     @api.onchange('discount')
-#     def _onchange_discount_t(self):
-#         logging.warn('test1')
-
-
 class AccountJournal(models.Model):
     _inherit = "account.journal"
 
