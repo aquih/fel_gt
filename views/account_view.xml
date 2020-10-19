@@ -69,6 +69,7 @@
                     <field name="group_invoice_lines" position="after">
                         <field name="codigo_establecimiento_fel"/>
                         <field name="tipo_documento_fel"/>
+                        <field name="error_en_historial_fel"/>
                     </field>
                 </data>
             </field>
