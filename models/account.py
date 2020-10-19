@@ -31,6 +31,28 @@ class AccountInvoice(models.Model):
     resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL')
 
+    def error_certificador(self, error):
+        self.ensure_one()
+        factura = self
+        if factura.journal_id.error_en_historial_fel:
+            factura.message_post(body='<p>No se publicó la factura por error del certificador FEL:</p> <p><strong>'+error+'</strong></p>')
+        else:
+            raise UserError('No se publicó la factura por error del certificador FEL: '+error)
+
+    def requiere_certificacion(self):
+        self.ensure_one()
+        factura = self
+        return factura.amount_total != 0
+
+    def error_pre_validacion(self):
+        self.ensure_one()
+        factura = self
+        if factura.firma_fel:
+            factura.error_fel("La factura ya fue validada, por lo que no puede ser validada nuevamnte")
+            return True
+
+        return False
+
     def descuento_lineas(self, invoice_line_ids):
         lineas_positivas = []
         precio_total_descuento = 0
