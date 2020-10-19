@@ -3,7 +3,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools.float_utils import float_round
-
+from odoo.release import version_info
 from datetime import datetime
 import base64
 from lxml import etree
@@ -174,7 +174,8 @@ class AccountInvoice(models.Model):
         gran_total = 0
         gran_total_impuestos = 0
         cantidad_impuestos = 0
-        self.descuento_lineas(factura.invoice_line_ids)
+        if version_info[0] > 10:
+            self.descuento_lineas(factura.invoice_line_ids)
 
         for linea in factura.invoice_line_ids:
 
@@ -235,8 +236,8 @@ class AccountInvoice(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.2f}'.format(factura.currency_id.round(gran_total))
 
-        if ElementoFrases and gran_total_impuestos == 0:
-            Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario="1", TipoFrase="4")
+        # if ElementoFrases and gran_total_impuestos == 0:
+        #     Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario="1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
             Adenda = etree.SubElement(SAT, DTE_NS+"Adenda")
