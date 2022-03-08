@@ -3,11 +3,13 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
-from datetime import datetime
-import base64
 from lxml import etree
+from datetime import datetime
+
+import base64
 import requests
 import re
+import json
 
 import odoo.addons.l10n_gt_extra.a_letras as a_letras
 
@@ -349,9 +351,22 @@ class AccountMove(models.Model):
                 total_isr = abs(factura.amount_tax)
 
                 total_iva_retencion = 0
-                for impuesto in factura.amount_by_group:
-                    if impuesto[1] > 0:
-                        total_iva_retencion += impuesto[1]
+                
+                # Version 13, 14
+                if 'amount_by_group' in factura.fields_get():
+                    for impuesto in factura.amount_by_group:
+                        if impuesto[1] > 0:
+                            total_iva_retencion += impuesto[1]
+
+                # Version 15    
+                if 'tax_totals_json' in factura.fields_get():
+                    invoice_totals = json.loads(factura.tax_totals_json)
+                    logging.warn(invoice_totals)
+                    for grupos in invoice_totals['groups_by_subtotal'].values():
+                        logging.warn(grupos)
+                        for impuesto in grupos:
+                            if impuesto['tax_group_amount'] > 0:
+                                total_iva_retencion += impuesto['tax_group_amount']
 
                 Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FacturaEspecial", NombreComplemento="FacturaEspecial", URIComplemento="http://www.sat.gob.gt/face2/ComplementoFacturaEspecial/0.1.0")
                 RetencionesFacturaEspecial = etree.SubElement(Complemento, CFE_NS+"RetencionesFacturaEspecial", Version="1", nsmap=NSMAP_FE)
@@ -453,3 +468,4 @@ class ResCompany(models.Model):
     afiliacion_iva_fel = fields.Selection([('GEN', 'GEN'), ('PEQ', 'PEQ'), ('EXE', 'EXE')], 'Afiliación IVA FEL', default='GEN')
     frases_fel = fields.Text('Frases FEL')
     adenda_fel = fields.Text('Adenda FEL')
+
