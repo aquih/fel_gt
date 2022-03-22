@@ -12,8 +12,10 @@
                 </div>
             </xpath>
             
+            <!--
             <xpath expr="//div[@class='footer o_standard_footer']/div/ul" position="replace">
             </xpath>
+            -->
         </template>
 
         <template id="fel_report_invoice_document" inherit_id="account.report_invoice_document">
