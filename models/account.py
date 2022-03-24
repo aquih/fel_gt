@@ -201,6 +201,8 @@ class AccountMove(models.Model):
                 frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
                 ElementoFrases.remove(frase_isr)
             DatosEmision.append(ElementoFrases)
+        elif tipo_documento_fel in ['NDEB', 'NCRE'] and factura.tipo_gasto == 'importacion':
+            ElementoFrases = etree.SubElement(DatosEmision, DTE_NS+"Frases")
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
 
@@ -296,9 +298,7 @@ class AccountMove(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
-        if (ElementoFrases is not None or (tipo_documento_fel in ['NDEB', 'NCRE'] and factura.tipo_gasto == 'importacion')) and factura.currency_id.is_zero(gran_total_impuestos) and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN':
-            if ElementoFrases is None:
-                ElementoFrases = etree.SubElement(DatosEmision, DTE_NS+"Frases")
+        if ElementoFrases is not None and factura.currency_id.is_zero(gran_total_impuestos) and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN':
             Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
