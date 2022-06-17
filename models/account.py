@@ -3,11 +3,13 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
-from datetime import datetime
-import base64
 from lxml import etree
+from datetime import datetime
+
+import base64
 import requests
 import re
+import json
 
 import odoo.addons.l10n_gt_extra.a_letras as a_letras
 
@@ -35,7 +37,7 @@ class AccountMove(models.Model):
     documento_xml_fel = fields.Binary('Documento xml FEL', copy=False)
     documento_xml_fel_name = fields.Char('Nombre doc xml FEL', default='documento_xml_fel.xml', size=32)
     resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
-    resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
+    resultado_xml_fel_name = fields.Char('Nombre doc xml FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', copy=False)
     
     def _get_invoice_reference_odoo_fel(self):
@@ -204,6 +206,8 @@ class AccountMove(models.Model):
                 frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
                 ElementoFrases.remove(frase_isr)
             DatosEmision.append(ElementoFrases)
+        elif tipo_documento_fel in ['NDEB', 'NCRE'] and factura.tipo_gasto == 'importacion':
+            ElementoFrases = etree.SubElement(DatosEmision, DTE_NS+"Frases")
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
 
@@ -314,7 +318,7 @@ class AccountMove(models.Model):
                 Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="ReferenciasNota", NombreComplemento="Nota de Credito" if tipo_documento_fel == 'NCRE' else "Nota de Debito", URIComplemento="http://www.sat.gob.gt/face2/ComplementoReferenciaNota/0.1.0")
                 if factura.factura_original_id.numero_fel:
                     ReferenciasNota = etree.SubElement(Complemento, CNO_NS+"ReferenciasNota", FechaEmisionDocumentoOrigen=str(factura.factura_original_id.invoice_date), MotivoAjuste=factura.motivo_fel or '-', NumeroAutorizacionDocumentoOrigen=factura.factura_original_id.firma_fel, NumeroDocumentoOrigen=factura.factura_original_id.numero_fel, SerieDocumentoOrigen=factura.factura_original_id.serie_fel, Version="0.0", nsmap=NSMAP_REF)
-                else:
+                elif factura.factura_original_id and factura.factura_original_id.ref and len(factura.factura_original_id.ref.split("-")) > 1:
                     ReferenciasNota = etree.SubElement(Complemento, CNO_NS+"ReferenciasNota", RegimenAntiguo="Antiguo", FechaEmisionDocumentoOrigen=str(factura.factura_original_id.invoice_date), MotivoAjuste=factura.motivo_fel or '-', NumeroAutorizacionDocumentoOrigen=factura.factura_original_id.firma_fel, NumeroDocumentoOrigen=factura.factura_original_id.ref.split("-")[1], SerieDocumentoOrigen=factura.factura_original_id.ref.split("-")[0], Version="0.0", nsmap=NSMAP_REF)
 
             if tipo_documento_fel in ['FCAM']:
@@ -354,9 +358,22 @@ class AccountMove(models.Model):
                 total_isr = abs(factura.amount_tax)
 
                 total_iva_retencion = 0
-                for impuesto in factura.amount_by_group:
-                    if impuesto[1] > 0:
-                        total_iva_retencion += impuesto[1]
+                
+                # Version 13, 14
+                if 'amount_by_group' in factura.fields_get():
+                    for impuesto in factura.amount_by_group:
+                        if impuesto[1] > 0:
+                            total_iva_retencion += impuesto[1]
+
+                # Version 15    
+                if 'tax_totals_json' in factura.fields_get():
+                    invoice_totals = json.loads(factura.tax_totals_json)
+                    logging.warn(invoice_totals)
+                    for grupos in invoice_totals['groups_by_subtotal'].values():
+                        logging.warn(grupos)
+                        for impuesto in grupos:
+                            if impuesto['tax_group_amount'] > 0:
+                                total_iva_retencion += impuesto['tax_group_amount']
 
                 Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FacturaEspecial", NombreComplemento="FacturaEspecial", URIComplemento="http://www.sat.gob.gt/face2/ComplementoFacturaEspecial/0.1.0")
                 RetencionesFacturaEspecial = etree.SubElement(Complemento, CFE_NS+"RetencionesFacturaEspecial", Version="1", nsmap=NSMAP_FE)
@@ -459,3 +476,4 @@ class ResCompany(models.Model):
     afiliacion_iva_fel = fields.Selection([('GEN', 'GEN'), ('PEQ', 'PEQ'), ('EXE', 'EXE')], 'Afiliación IVA FEL', default='GEN')
     frases_fel = fields.Text('Frases FEL')
     adenda_fel = fields.Text('Adenda FEL')
+
