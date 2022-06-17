@@ -38,6 +38,11 @@ class AccountMove(models.Model):
     resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', copy=False)
     
+    def _get_invoice_reference_odoo_fel(self):
+        """ Simplemente usa el numero FEL
+        """
+        return str(self.serie_fel) + '-' + str(self.numero_fel)
+
     def num_a_letras(self, amount):
         return a_letras.num_a_letras(amount,completo=True)
 
@@ -445,6 +450,7 @@ class AccountJournal(models.Model):
     tipo_documento_fel = fields.Selection([('FACT', 'FACT'), ('FCAM', 'FCAM'), ('FPEQ', 'FPEQ'), ('FCAP', 'FCAP'), ('FESP', 'FESP'), ('NABN', 'NABN'), ('RDON', 'RDON'), ('RECI', 'RECI'), ('NDEB', 'NDEB'), ('NCRE', 'NCRE')], 'Tipo de Documento FEL', copy=False)
     error_en_historial_fel = fields.Boolean('Registrar error FEL', help='Los errores no se muestran en pantalla, solo se registran en el historial')
     contingencia_fel = fields.Boolean('Habilitar contingencia FEL')
+    invoice_reference_type = fields.Selection(selection_add=[('fel', 'FEL')], ondelete={'fel': 'set default'})
     
 class ResCompany(models.Model):
     _inherit = "res.company"
