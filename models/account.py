@@ -232,7 +232,9 @@ class AccountMove(models.Model):
             precio_unitario = linea.price_unit * (100-linea.discount) / 100
             precio_sin_descuento = linea.price_unit
             descuento = precio_sin_descuento * linea.quantity - precio_unitario * linea.quantity
-            precio_unitario_base = linea.price_subtotal / linea.quantity
+            precio_unitario_base = precio_unitario
+            if linea.price_total != linea.price_subtotal:
+                precio_unitario_base = linea.price_subtotal / linea.quantity
             total_linea = precio_unitario * linea.quantity
             total_linea_base = precio_unitario_base * linea.quantity
             total_impuestos = total_linea - total_linea_base
