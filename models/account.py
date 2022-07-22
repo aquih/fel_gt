@@ -62,7 +62,7 @@ class AccountMove(models.Model):
         factura = self
         requiere = factura.is_invoice() and factura.journal_id.generar_fel and factura.amount_total != 0
         if certificador:
-            requiere = requiere and ( factura.company_id.certificador_fel == certificador )
+            requiere = requiere and ( factura.company_id.certificador_fel == certificador or not factura.company_id.certificador_fel )
         return requiere
 
     def error_pre_validacion(self):
