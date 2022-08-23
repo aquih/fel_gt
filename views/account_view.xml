@@ -8,7 +8,7 @@
             <field name="inherit_id" ref="l10n_gt_extra.l10n_gt_view_move_form"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="narration" position="before">
+                    <xpath expr="//page[@id='invoice_tab']" position="inside">
                         <group>
                             <group>
                                 <field name="firma_fel"/>
@@ -23,7 +23,7 @@
                                 <field name="resultado_xml_fel" readonly="1" filename="resultado_xml_fel_name"/>
                             </group>
                         </group>
-                    </field>
+                    </xpath>
                     <field name="tipo_gasto" position="after">
                         <field name="frase_exento_fel"/>
                         <field name="motivo_fel"/>
