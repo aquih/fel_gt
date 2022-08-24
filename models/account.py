@@ -205,7 +205,8 @@ class AccountMove(models.Model):
             ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
             if tipo_documento_fel not in ['FACT', 'FCAM']:
                 frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
-                ElementoFrases.remove(frase_isr)
+                if frase_isr:
+                    ElementoFrases.remove(frase_isr)
             DatosEmision.append(ElementoFrases)
         elif tipo_documento_fel in ['NDEB', 'NCRE'] and factura.tipo_gasto == 'importacion':
             ElementoFrases = etree.SubElement(DatosEmision, DTE_NS+"Frases")
