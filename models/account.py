@@ -299,7 +299,7 @@ class AccountMove(models.Model):
             gran_total_impuestos_timbre += total_impuestos_timbre
 
         Totales = etree.SubElement(DatosEmision, DTE_NS+"Totales")
-        if tipo_documento_fel not in ['NABN', 'RECI']:
+        if tipo_documento_fel not in ['NABN', 'RECI', 'FPEQ']:
             TotalImpuestos = etree.SubElement(Totales, DTE_NS+"TotalImpuestos")
             TotalImpuesto = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto="IVA", TotalMontoImpuesto='{:.6f}'.format(gran_total_impuestos))
             if not factura.currency_id.is_zero(gran_total_impuestos_timbre):
