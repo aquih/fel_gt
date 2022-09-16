@@ -472,12 +472,3 @@ class AccountJournal(models.Model):
     error_en_historial_fel = fields.Boolean('Registrar error FEL', help='Los errores no se muestran en pantalla, solo se registran en el historial')
     contingencia_fel = fields.Boolean('Habilitar contingencia FEL')
     invoice_reference_type = fields.Selection(selection_add=[('fel', 'FEL')], ondelete=({'fel': 'set default'} if version_info[0] > 13 else ''))
-    
-class ResCompany(models.Model):
-    _inherit = "res.company"
-
-    certificador_fel = fields.Selection([], 'Certificador FEL')
-    afiliacion_iva_fel = fields.Selection([('GEN', 'GEN'), ('PEQ', 'PEQ'), ('EXE', 'EXE')], 'Afiliación IVA FEL', default='GEN')
-    frases_fel = fields.Text('Frases FEL')
-    adenda_fel = fields.Text('Adenda FEL')
-
