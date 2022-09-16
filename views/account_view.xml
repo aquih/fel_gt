@@ -54,5 +54,24 @@
             </field>
         </record>
         
+        <record model="ir.ui.view" id="view_tax_form_fel_gt">
+            <field name="name">account.tax.form.fel_gt</field>
+            <field name="model">account.tax</field>
+            <field name="inherit_id" ref="account.view_tax_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <notebook position="inside">
+                        <page string="Extra">
+                            <group string="FEL">
+                                <group>
+                                    <field name="tipo_impuesto_fel"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </data>
+            </field>
+        </record>
+        
     </data>
 </openerp>
