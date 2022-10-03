@@ -10,6 +10,7 @@
                 <data>
                     <field name="cui" position="after">
                         <field name="nombre_facturacion_fel"/>
+                        <field name="nit_facturacion_fel"/>
                     </field>
                 </data>
             </field>
