@@ -521,6 +521,11 @@ class AccountJournal(models.Model):
     error_en_historial_fel = fields.Boolean('Registrar error FEL', help='Los errores no se muestran en pantalla, solo se registran en el historial')
     contingencia_fel = fields.Boolean('Habilitar contingencia FEL')
     invoice_reference_type = fields.Selection(selection_add=[('fel', 'FEL')], ondelete=({'fel': 'set default'} if version_info[0] > 13 else ''))
+
+class AccountTax(models.Model):
+    _inherit = 'account.tax'
+
+    tipo_impuesto_fel = fields.Selection([('IVA', 'IVA'), ('PETROLEO', 'PETROLEO'), ('TURISMO HOSPEDAJE', 'TURISMO HOSPEDAJE'), ('TURISMO PASAJES', 'TURISMO PASAJES'), ('TIMBRE DE PRENSA', 'TIMBRE DE PRENSA'), ('BOMBEROS', 'BOMBEROS'), ('TASA MUNICIPAL', 'TASA MUNICIPAL')], 'Tipo de Impuesto FEL', copy=False)
     
 class ProductTemplate(models.Model):
     _inherit = "product.template"
