@@ -176,9 +176,13 @@ class AccountMove(models.Model):
         nit_receptor = 'CF'
         if factura.partner_id.vat:
             nit_receptor = factura.partner_id.vat.replace('-','')
+        if factura.partner_id.nit_facturacion_fel:
+            nit_receptor = factura.partner_id.nit_facturacion_fel.replace('-','')
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             nit_receptor = factura.partner_id.cui
+            
         Receptor = etree.SubElement(DatosEmision, DTE_NS+"Receptor", IDReceptor=nit_receptor, NombreReceptor=factura.partner_id.name if not factura.partner_id.parent_id else factura.partner_id.parent_id.name)
+        
         if factura.partner_id.nombre_facturacion_fel:
             Receptor.attrib['NombreReceptor'] = factura.partner_id.nombre_facturacion_fel
         if factura.partner_id.email:
@@ -190,7 +194,7 @@ class AccountMove(models.Model):
 
         DireccionReceptor = etree.SubElement(Receptor, DTE_NS+"DireccionReceptor")
         Direccion = etree.SubElement(DireccionReceptor, DTE_NS+"Direccion")
-        Direccion.text = (factura.partner_id.street or '') + ' ' + (factura.partner_id.street2 or '')
+        Direccion.text = " ".join([x for x in (factura.partner_id.street, factura.partner_id.street2) if x]).strip() or 'Ciudad'
         CodigoPostal = etree.SubElement(DireccionReceptor, DTE_NS+"CodigoPostal")
         CodigoPostal.text = factura.partner_id.zip or '01001'
         Municipio = etree.SubElement(DireccionReceptor, DTE_NS+"Municipio")
@@ -201,14 +205,13 @@ class AccountMove(models.Model):
         Pais.text = factura.partner_id.country_id.code or 'GT'
         
         ElementoFrases = None
-        if tipo_documento_fel not in ['NDEB', 'NCRE', 'NABN', 'FESP']:
+        if tipo_documento_fel not in ['NABN', 'FESP']:
             ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
             if tipo_documento_fel not in ['FACT', 'FCAM']:
                 frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
-                ElementoFrases.remove(frase_isr)
+                if frase_isr:
+                    ElementoFrases.remove(frase_isr)
             DatosEmision.append(ElementoFrases)
-        elif tipo_documento_fel in ['NDEB', 'NCRE'] and factura.tipo_gasto == 'importacion':
-            ElementoFrases = etree.SubElement(DatosEmision, DTE_NS+"Frases")
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
 
@@ -282,7 +285,7 @@ class AccountMove(models.Model):
             Precio.text = '{:.6f}'.format(precio_sin_descuento * linea.quantity)
             Descuento = etree.SubElement(Item, DTE_NS+"Descuento")
             Descuento.text = '{:.6f}'.format(descuento)
-            if tipo_documento_fel not in ['NABN', 'RECI']:
+            if tipo_documento_fel not in ['NABN', 'RECI', 'FPEQ']:
                 Impuestos = etree.SubElement(Item, DTE_NS+"Impuestos")
                 Impuesto = etree.SubElement(Impuestos, DTE_NS+"Impuesto")
                 NombreCorto = etree.SubElement(Impuesto, DTE_NS+"NombreCorto")
@@ -340,7 +343,7 @@ class AccountMove(models.Model):
             gran_total_impuestos_isd_no_alcoholico += total_impuestos_isd_no_alcoholico
 
         Totales = etree.SubElement(DatosEmision, DTE_NS+"Totales")
-        if tipo_documento_fel not in ['NABN', 'RECI']:
+        if tipo_documento_fel not in ['NABN', 'RECI', 'FPEQ']:
             TotalImpuestos = etree.SubElement(Totales, DTE_NS+"TotalImpuestos")
             TotalImpuesto = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto="IVA", TotalMontoImpuesto='{:.6f}'.format(gran_total_impuestos))
             if not factura.currency_id.is_zero(gran_total_impuestos_timbre):
@@ -518,14 +521,6 @@ class AccountJournal(models.Model):
     error_en_historial_fel = fields.Boolean('Registrar error FEL', help='Los errores no se muestran en pantalla, solo se registran en el historial')
     contingencia_fel = fields.Boolean('Habilitar contingencia FEL')
     invoice_reference_type = fields.Selection(selection_add=[('fel', 'FEL')], ondelete=({'fel': 'set default'} if version_info[0] > 13 else ''))
-    
-class ResCompany(models.Model):
-    _inherit = "res.company"
-
-    certificador_fel = fields.Selection([], 'Certificador FEL')
-    afiliacion_iva_fel = fields.Selection([('GEN', 'GEN'), ('PEQ', 'PEQ'), ('EXE', 'EXE')], 'Afiliación IVA FEL', default='GEN')
-    frases_fel = fields.Text('Frases FEL')
-    adenda_fel = fields.Text('Adenda FEL')
     
 class ProductTemplate(models.Model):
     _inherit = "product.template"

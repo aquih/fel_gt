@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record id="view_company_form_fel_gt" model="ir.ui.view">
+            <field name="name">res.company.form.fel_gt</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <notebook position="inside">
+                        <page string="Extra">
+                            <group string="FEL">
+                                <group>
+                                    <field name="certificador_fel"/>
+                                    <field name="afiliacion_iva_fel"/>
+                                    <field name="frases_fel"/>
+                                    <field name="adenda_fel"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </data>
+            </field>
+        </record>
+        
+    </data>
+</openerp>
