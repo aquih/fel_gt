@@ -209,7 +209,8 @@ class AccountMove(models.Model):
             ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
             if tipo_documento_fel not in ['FACT', 'FCAM']:
                 frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
-                if frase_isr:
+                logging.warn(frase_isr)
+                if frase_isr is not None:
                     ElementoFrases.remove(frase_isr)
             DatosEmision.append(ElementoFrases)
 
@@ -421,9 +422,7 @@ class AccountMove(models.Model):
                 # Version 15    
                 if 'tax_totals_json' in factura.fields_get():
                     invoice_totals = json.loads(factura.tax_totals_json)
-                    logging.warn(invoice_totals)
                     for grupos in invoice_totals['groups_by_subtotal'].values():
-                        logging.warn(grupos)
                         for impuesto in grupos:
                             if impuesto['tax_group_amount'] > 0:
                                 total_iva_retencion += impuesto['tax_group_amount']
