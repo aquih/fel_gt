@@ -30,10 +30,10 @@ class AccountInvoice(models.Model):
     incoterm_fel = fields.Char(string='Incoterm FEL')
     frase_exento_fel = fields.Integer('Fase Exento FEL')
     motivo_fel = fields.Char(string='Motivo FEL')
-    documento_xml_fel = fields.Binary('Documento xml FEL', copy=False)
-    documento_xml_fel_name = fields.Char('Nombre doc xml FEL', default='documento_xml_fel.xml', size=32)
-    resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
-    resultado_xml_fel_name = fields.Char('Resultado doc xml FEL', default='resultado_xml_fel.xml', size=32)
+    documento_xml_fel = fields.Binary('Documento XML FEL', copy=False)
+    documento_xml_fel_name = fields.Char('Nombre archivo XML FEL', default='documento_xml_fel.xml', size=32)
+    resultado_xml_fel = fields.Binary('Resultado XML FEL', copy=False)
+    resultado_xml_fel_name = fields.Char('Resultado archivo XML FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', copy=False)
     
     def num_a_letras(self, amount):
@@ -175,8 +175,16 @@ class AccountInvoice(models.Model):
         Pais = etree.SubElement(DireccionReceptor, DTE_NS+"Pais")
         Pais.text = factura.partner_id.country_id.code or 'GT'
 
-        if tipo_documento_fel not in ['NDEB', 'NCRE', 'RECI', 'NABN', 'FESP']:
+        ElementoFrases = None
+        if tipo_documento_fel not in ['NABN', 'FESP']:
             ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
+            if datetime.now().isoformat() < '2022-11-01' and tipo_documento_fel not in ['FACT', 'FCAM']:
+                frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
+                if frase_isr is not None:
+                    ElementoFrases.remove(frase_isr)
+                frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
+                if frase_iva is not None:
+                    ElementoFrases.remove(frase_iva)
             DatosEmision.append(ElementoFrases)
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
