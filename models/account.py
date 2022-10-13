@@ -214,8 +214,7 @@ class AccountMove(models.Model):
                 frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
                 if frase_iva is not None:
                     ElementoFrases.remove(frase_iva)
-            if len(ElementoFrases):
-                DatosEmision.append(ElementoFrases)
+            DatosEmision.append(ElementoFrases)
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
 
