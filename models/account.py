@@ -392,6 +392,9 @@ class AccountMove(models.Model):
                 RetencionIVA.text = str(total_iva_retencion)
                 TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
                 TotalMenosRetenciones.text = str(factura.amount_total)
+                
+        if len(ElementoFrases) == 0:
+            DatosEmision.remove(ElementoFrases)
 
         # signature = xmlsig.template.create(
         #     xmlsig.constants.TransformInclC14N,
