@@ -260,7 +260,7 @@ class AccountMove(models.Model):
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
-            Cantidad.text = '{:.10f}'.format(linea.quantity)
+            Cantidad.text = '{:.{p}f}'.format(linea.quantity, p=self.env['decimal.precision'].precision_get('Product Unit of Measure'))
             UnidadMedida = etree.SubElement(Item, DTE_NS+"UnidadMedida")
             UnidadMedida.text = linea.product_uom_id.name[0:3] if linea.product_uom_id else 'UNI'
             Descripcion = etree.SubElement(Item, DTE_NS+"Descripcion")
