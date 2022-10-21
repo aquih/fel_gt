@@ -393,7 +393,7 @@ class AccountMove(models.Model):
                 TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
                 TotalMenosRetenciones.text = str(factura.amount_total)
                 
-        if len(ElementoFrases) == 0:
+        if ElementoFrases is not None and len(ElementoFrases) == 0:
             DatosEmision.remove(ElementoFrases)
 
         # signature = xmlsig.template.create(
