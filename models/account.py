@@ -178,7 +178,7 @@ class AccountInvoice(models.Model):
         ElementoFrases = None
         if tipo_documento_fel not in ['NABN', 'FESP']:
             ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
-            if datetime.now().isoformat() < '2022-11-01' and tipo_documento_fel not in ['FACT', 'FCAM']:
+            if datetime.now().isoformat() < '2022-10-30' and tipo_documento_fel not in ['FACT', 'FCAM']:
                 frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
                 if frase_isr is not None:
                     ElementoFrases.remove(frase_isr)
