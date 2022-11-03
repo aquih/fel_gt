@@ -356,6 +356,8 @@ class AccountMove(models.Model):
                 DireccionComprador.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
                 CodigoComprador = etree.SubElement(Exportacion, CEX_NS+"CodigoComprador")
                 CodigoComprador.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
+                OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
+                OtraReferencia.text = factura.ref or "-"
                 if len(factura.invoice_line_ids.filtered(lambda l: l.product_id.type != 'service')) > 0:
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
                     INCOTERM.text = factura.incoterm_fel or "-"
