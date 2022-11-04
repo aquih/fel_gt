@@ -159,7 +159,7 @@ class AccountInvoice(models.Model):
             Receptor.attrib['CorreoReceptor'] = factura.partner_id.email
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             Receptor.attrib['TipoEspecial'] = "CUI"
-        if tipo_documento_fel == "FESP" and factura.partner_id.country_id.code != 'GT':
+        if tipo_documento_fel == "FESP" and factura.tipo_gasto == 'importacion':
             Receptor.attrib['TipoEspecial'] = "EXT"
 
         DireccionReceptor = etree.SubElement(Receptor, DTE_NS+"DireccionReceptor")
