@@ -207,6 +207,13 @@ class AccountMove(models.Model):
         ElementoFrases = None
         if tipo_documento_fel not in ['NABN', 'FESP', 'NCRE', 'NDEB']:
             ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
+            if datetime.now().isoformat() < '2022-10-30' and tipo_documento_fel not in ['FACT', 'FCAM']:
+                frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
+                if frase_isr is not None:
+                    ElementoFrases.remove(frase_isr)
+                frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
+                if frase_iva is not None:
+                    ElementoFrases.remove(frase_iva)
             DatosEmision.append(ElementoFrases)
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
@@ -270,7 +277,7 @@ class AccountMove(models.Model):
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
-            Cantidad.text = '{:.10f}'.format(linea.quantity)
+            Cantidad.text = '{:.{p}f}'.format(linea.quantity, p=self.env['decimal.precision'].precision_get('Product Unit of Measure'))
             UnidadMedida = etree.SubElement(Item, DTE_NS+"UnidadMedida")
             UnidadMedida.text = linea.product_uom_id.name[0:3] if linea.product_uom_id else 'UNI'
             Descripcion = etree.SubElement(Item, DTE_NS+"Descripcion")
@@ -396,8 +403,11 @@ class AccountMove(models.Model):
                 DireccionComprador.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
                 CodigoComprador = etree.SubElement(Exportacion, CEX_NS+"CodigoComprador")
                 CodigoComprador.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
-                INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
-                INCOTERM.text = factura.incoterm_fel or "-"
+                OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
+                OtraReferencia.text = factura.ref or "-"
+                if len(factura.invoice_line_ids.filtered(lambda l: l.product_id.type != 'service')) > 0:
+                    INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
+                    INCOTERM.text = factura.incoterm_fel or "-"
                 NombreExportador = etree.SubElement(Exportacion, CEX_NS+"NombreExportador")
                 NombreExportador.text = factura.exportador_fel.name if factura.exportador_fel else "-"
                 CodigoExportador = etree.SubElement(Exportacion, CEX_NS+"CodigoExportador")
@@ -430,6 +440,9 @@ class AccountMove(models.Model):
                 RetencionIVA.text = str(total_iva_retencion)
                 TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
                 TotalMenosRetenciones.text = str(factura.amount_total)
+                
+        if ElementoFrases is not None and len(ElementoFrases) == 0:
+            DatosEmision.remove(ElementoFrases)
 
         # signature = xmlsig.template.create(
         #     xmlsig.constants.TransformInclC14N,
