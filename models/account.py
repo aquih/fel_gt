@@ -204,16 +204,14 @@ class AccountMove(models.Model):
         Pais = etree.SubElement(DireccionReceptor, DTE_NS+"Pais")
         Pais.text = factura.partner_id.country_id.code or 'GT'
         
-        ElementoFrases = None
-        if tipo_documento_fel not in ['NABN', 'FESP']:
-            ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
-            if datetime.now().isoformat() < '2022-10-30' and tipo_documento_fel not in ['FACT', 'FCAM']:
-                frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
-                if frase_isr is not None:
-                    ElementoFrases.remove(frase_isr)
-                frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
-                if frase_iva is not None:
-                    ElementoFrases.remove(frase_iva)
+        ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
+        if tipo_documento_fel in ['NABN', 'FESP', 'RECI']:
+            frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
+            if frase_isr is not None:
+                ElementoFrases.remove(frase_isr)
+            frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
+            if frase_iva is not None:
+                ElementoFrases.remove(frase_iva)
             DatosEmision.append(ElementoFrases)
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
@@ -312,7 +310,7 @@ class AccountMove(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
-        if ElementoFrases is not None and factura.currency_id.is_zero(gran_total_impuestos) and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN':
+        if tipo_documento_fel not in ['NABN', 'FESP'] and factura.currency_id.is_zero(gran_total_impuestos) and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN':
             Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
