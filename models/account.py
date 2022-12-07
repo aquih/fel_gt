@@ -157,6 +157,8 @@ class AccountInvoice(models.Model):
             Receptor.attrib['NombreReceptor'] = factura.partner_id.nombre_facturacion_fel
         if factura.partner_id.email:
             Receptor.attrib['CorreoReceptor'] = factura.partner_id.email
+        if len(nit_receptor) > 9:
+            Receptor.attrib['TipoEspecial'] = "CUI"
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             Receptor.attrib['TipoEspecial'] = "CUI"
         if tipo_documento_fel == "FESP" and factura.tipo_gasto == 'importacion':
@@ -175,17 +177,15 @@ class AccountInvoice(models.Model):
         Pais = etree.SubElement(DireccionReceptor, DTE_NS+"Pais")
         Pais.text = factura.partner_id.country_id.code or 'GT'
 
-        ElementoFrases = None
-        if tipo_documento_fel not in ['NABN', 'FESP']:
-            ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
-            if datetime.now().isoformat() < '2022-10-30' and tipo_documento_fel not in ['FACT', 'FCAM']:
-                frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
-                if frase_isr is not None:
-                    ElementoFrases.remove(frase_isr)
-                frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
-                if frase_iva is not None:
-                    ElementoFrases.remove(frase_iva)
-            DatosEmision.append(ElementoFrases)
+        ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
+        if tipo_documento_fel in ['NABN', 'FESP', 'RECI']:
+            frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
+            if frase_isr is not None:
+                ElementoFrases.remove(frase_isr)
+            frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
+            if frase_iva is not None:
+                ElementoFrases.remove(frase_iva)
+        DatosEmision.append(ElementoFrases)
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
 
