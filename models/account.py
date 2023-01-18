@@ -155,13 +155,15 @@ class AccountInvoice(models.Model):
         Receptor = etree.SubElement(DatosEmision, DTE_NS+"Receptor", IDReceptor=nit_receptor, NombreReceptor=factura.partner_id.name if not factura.partner_id.parent_id else factura.partner_id.parent_id.name)
         if factura.partner_id.nombre_facturacion_fel:
             Receptor.attrib['NombreReceptor'] = factura.partner_id.nombre_facturacion_fel
+
         if factura.partner_id.email:
             Receptor.attrib['CorreoReceptor'] = factura.partner_id.email
-        if len(nit_receptor) > 9 and factura.tipo_gasto != 'importacion':
+            
+        if len(nit_receptor) > 9:
             Receptor.attrib['TipoEspecial'] = "CUI"
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             Receptor.attrib['TipoEspecial'] = "CUI"
-        if tipo_documento_fel == "FESP" and factura.tipo_gasto == 'importacion':
+        if tipo_documento_fel in ["FESP", "FACT", "FCAM"] and factura.partner_id.country_id and factura.partner_id.country_id.code != 'GT':
             Receptor.attrib['TipoEspecial'] = "EXT"
 
         DireccionReceptor = etree.SubElement(Receptor, DTE_NS+"DireccionReceptor")
