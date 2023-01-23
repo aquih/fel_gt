@@ -193,7 +193,7 @@ class AccountMove(models.Model):
             Receptor.attrib['TipoEspecial'] = "CUI"
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             Receptor.attrib['TipoEspecial'] = "CUI"
-        if tipo_documento_fel in ["FESP", "FACT", "FCAM"] and factura.partner_id.country_id and factura.partner_id.country_id.code != 'GT':
+        if factura.partner_id.country_id and factura.partner_id.country_id.code != 'GT':
             Receptor.attrib['TipoEspecial'] = "EXT"
 
         DireccionReceptor = etree.SubElement(Receptor, DTE_NS+"DireccionReceptor")
