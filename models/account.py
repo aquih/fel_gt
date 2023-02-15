@@ -163,7 +163,7 @@ class AccountInvoice(models.Model):
             Receptor.attrib['TipoEspecial'] = "CUI"
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             Receptor.attrib['TipoEspecial'] = "CUI"
-        if tipo_documento_fel in ["FESP", "FACT", "FCAM"] and factura.partner_id.country_id and factura.partner_id.country_id.code != 'GT':
+        if factura.partner_id.country_id and factura.partner_id.country_id.code != 'GT':
             Receptor.attrib['TipoEspecial'] = "EXT"
 
         DireccionReceptor = etree.SubElement(Receptor, DTE_NS+"DireccionReceptor")
@@ -258,7 +258,7 @@ class AccountInvoice(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.3f}'.format(factura.currency_id.round(gran_total))
 
-        if ElementoFrases is not None and float_is_zero(gran_total_impuestos, precision_rounding=factura.currency_id.rounding) and tipo_documento_fel not in ['NABN']:
+        if tipo_documento_fel not in ['NABN', 'FESP'] and factura.currency_id.is_zero(gran_total_impuestos):
             Frase = etree.SubElement(DatosEmision.find("{http://www.sat.gob.gt/dte/fel/0.2.0}Frases"), DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
             
         if factura.company_id.adenda_fel:
