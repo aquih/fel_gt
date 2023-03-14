@@ -35,14 +35,14 @@ class AccountMove(models.Model):
     incoterm_fel = fields.Char(string="Incoterm FEL")
     frase_exento_fel = fields.Integer('Fase Exento FEL')
     motivo_fel = fields.Char(string='Motivo FEL')
-    documento_xml_fel = fields.Binary('Documento xml FEL', copy=False)
-    documento_xml_fel_name = fields.Char('Nombre doc xml FEL', default='documento_xml_fel.xml', size=32)
-    resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
-    resultado_xml_fel_name = fields.Char('Nombre doc xml FEL', default='resultado_xml_fel.xml', size=32)
+    documento_xml_fel = fields.Binary('Documento XML FEL', copy=False)
+    documento_xml_fel_name = fields.Char('Nombre documento XML FEL', default='documento_xml_fel.xml', size=32)
+    resultado_xml_fel = fields.Binary('Resultado XML FEL', copy=False)
+    resultado_xml_fel_name = fields.Char('Nombre documento XML FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', copy=False)
     
     def _get_invoice_reference_odoo_fel(self):
-        """ Simplemente usa el numero FEL
+        """ Usa el numero FEL
         """
         return str(self.serie_fel) + '-' + str(self.numero_fel)
 
@@ -98,8 +98,10 @@ class AccountMove(models.Model):
             for linea in factura.invoice_line_ids:
                 if linea.price_unit > 0:
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
-                    name = linea.name
-                    factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
+                    if factura.journal_id.no_usar_descuento_fel:
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (price_unit * (100 - descuento)/100) }]] })
+                    else
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
                     
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
@@ -230,7 +232,7 @@ class AccountMove(models.Model):
         
         for linea in factura.invoice_line_ids:
 
-            if linea.price_total == 0:
+            if linea.price_total == 0 and not factura.journal_id.enviar_lineas_en_cero_fel:
                 continue
 
             linea_num += 1
@@ -480,9 +482,11 @@ class AccountJournal(models.Model):
 
     generar_fel = fields.Boolean('Generar FEL')
     tipo_documento_fel = fields.Selection([('FACT', 'FACT'), ('FCAM', 'FCAM'), ('FPEQ', 'FPEQ'), ('FCAP', 'FCAP'), ('FESP', 'FESP'), ('NABN', 'NABN'), ('RDON', 'RDON'), ('RECI', 'RECI'), ('NDEB', 'NDEB'), ('NCRE', 'NCRE')], 'Tipo de Documento FEL', copy=False)
-    error_en_historial_fel = fields.Boolean('Registrar error FEL', help='Los errores no se muestran en pantalla, solo se registran en el historial')
+    error_en_historial_fel = fields.Boolean('Error FEL en historial', help='Los errores no se muestran en pantalla, solo se registran en el historial')
     contingencia_fel = fields.Boolean('Habilitar contingencia FEL')
     invoice_reference_type = fields.Selection(selection_add=[('fel', 'FEL')], ondelete=({'fel': 'set default'} if version_info[0] > 13 else ''))
+    no_usar_descuento_fel = fields.Boolean('No usar descuento cuando hay lineas negativas en FEL')
+    enviar_lineas_en_cero_fel = fields.Boolean('Enviar lineas en cero para FEL')
 
 class AccountTax(models.Model):
     _inherit = 'account.tax'
