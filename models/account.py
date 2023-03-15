@@ -99,8 +99,8 @@ class AccountMove(models.Model):
                 if linea.price_unit > 0:
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
                     if factura.journal_id.no_usar_descuento_fel:
-                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (price_unit * (100 - descuento)/100) }]] })
-                    else
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (linea.price_unit * (100 - descuento)/100) }]] })
+                    else:
                         factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
                     
             for linea in factura.invoice_line_ids:
@@ -282,7 +282,7 @@ class AccountMove(models.Model):
                 NombreCorto.text = "IVA"
                 CodigoUnidadGravable = etree.SubElement(Impuesto, DTE_NS+"CodigoUnidadGravable")
                 CodigoUnidadGravable.text = "1"
-                if factura.currency_id.is_zero(total_impuestos):
+                if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                     CodigoUnidadGravable.text = "2"
                 MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
                 MontoGravable.text = '{:.6f}'.format(total_linea_base)
