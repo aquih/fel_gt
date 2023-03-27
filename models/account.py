@@ -261,6 +261,7 @@ class AccountMove(models.Model):
                         total_impuestos_timbre += i['amount']
                         
             total_linea += total_impuestos_timbre
+            total_lineas_sin_impuestos = 0
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
@@ -284,6 +285,7 @@ class AccountMove(models.Model):
                 CodigoUnidadGravable.text = "1"
                 if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                     CodigoUnidadGravable.text = "2"
+                    total_lineas_sin_impuestos += 1
                 MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
                 MontoGravable.text = '{:.6f}'.format(total_linea_base)
                 MontoImpuesto = etree.SubElement(Impuesto, DTE_NS+"MontoImpuesto")
@@ -316,7 +318,7 @@ class AccountMove(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
-        if tipo_documento_fel not in ['NABN', 'FESP'] and factura.currency_id.is_zero(gran_total_impuestos) and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN':
+        if tipo_documento_fel not in ['NABN', 'FESP'] and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN' and total_lineas_sin_impuestos > 0:
             Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
