@@ -35,14 +35,14 @@ class AccountMove(models.Model):
     incoterm_fel = fields.Char(string="Incoterm FEL")
     frase_exento_fel = fields.Integer('Fase Exento FEL')
     motivo_fel = fields.Char(string='Motivo FEL')
-    documento_xml_fel = fields.Binary('Documento xml FEL', copy=False)
-    documento_xml_fel_name = fields.Char('Nombre doc xml FEL', default='documento_xml_fel.xml', size=32)
-    resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
-    resultado_xml_fel_name = fields.Char('Nombre doc xml FEL', default='resultado_xml_fel.xml', size=32)
+    documento_xml_fel = fields.Binary('Documento XML FEL', copy=False)
+    documento_xml_fel_name = fields.Char('Nombre documento XML FEL', default='documento_xml_fel.xml', size=32)
+    resultado_xml_fel = fields.Binary('Resultado XML FEL', copy=False)
+    resultado_xml_fel_name = fields.Char('Nombre documento XML FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', copy=False)
     
     def _get_invoice_reference_odoo_fel(self):
-        """ Simplemente usa el numero FEL
+        """ Usa el numero FEL
         """
         return str(self.serie_fel) + '-' + str(self.numero_fel)
 
@@ -69,7 +69,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         factura = self
         if factura.firma_fel:
-            factura.error_certificador("La factura ya fue validada, por lo que no puede ser validada nuevamnte")
+            factura.error_certificador("La factura ya fue validada, por lo que no puede ser validada nuevamente")
             return True
 
         return False
@@ -98,8 +98,10 @@ class AccountMove(models.Model):
             for linea in factura.invoice_line_ids:
                 if linea.price_unit > 0:
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
-                    name = linea.name
-                    factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
+                    if factura.journal_id.no_usar_descuento_fel:
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (linea.price_unit * (100 - descuento)/100) }]] })
+                    else:
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
                     
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
@@ -189,7 +191,7 @@ class AccountMove(models.Model):
         if factura.partner_id.email:
             Receptor.attrib['CorreoReceptor'] = factura.partner_id.email
             
-        if len(nit_receptor) > 9:
+        if len(nit_receptor) > 10:
             Receptor.attrib['TipoEspecial'] = "CUI"
         if tipo_documento_fel == "FESP" and factura.partner_id.cui:
             Receptor.attrib['TipoEspecial'] = "CUI"
@@ -233,7 +235,7 @@ class AccountMove(models.Model):
         
         for linea in factura.invoice_line_ids:
 
-            if linea.price_total == 0:
+            if linea.price_total == 0 and not factura.journal_id.enviar_lineas_en_cero_fel:
                 continue
 
             linea_num += 1
@@ -276,6 +278,7 @@ class AccountMove(models.Model):
                         total_impuestos_timbre += i['amount']
                         
             total_linea += total_impuestos_timbre
+            total_lineas_sin_impuestos = 0
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
@@ -297,8 +300,9 @@ class AccountMove(models.Model):
                 NombreCorto.text = "IVA"
                 CodigoUnidadGravable = etree.SubElement(Impuesto, DTE_NS+"CodigoUnidadGravable")
                 CodigoUnidadGravable.text = "1"
-                if factura.currency_id.is_zero(total_impuestos):
+                if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                     CodigoUnidadGravable.text = "2"
+                    total_lineas_sin_impuestos += 1
                 MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
                 MontoGravable.text = '{:.6f}'.format(total_linea_base)
                 MontoImpuesto = etree.SubElement(Impuesto, DTE_NS+"MontoImpuesto")
@@ -361,7 +365,7 @@ class AccountMove(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total+gran_total_impuestos_isd)
 
-        if tipo_documento_fel not in ['NABN', 'FESP'] and factura.currency_id.is_zero(gran_total_impuestos) and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN':
+        if tipo_documento_fel not in ['NABN', 'FESP'] and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN' and total_lineas_sin_impuestos > 0:
             Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
@@ -527,9 +531,11 @@ class AccountJournal(models.Model):
 
     generar_fel = fields.Boolean('Generar FEL')
     tipo_documento_fel = fields.Selection([('FACT', 'FACT'), ('FCAM', 'FCAM'), ('FPEQ', 'FPEQ'), ('FCAP', 'FCAP'), ('FESP', 'FESP'), ('NABN', 'NABN'), ('RDON', 'RDON'), ('RECI', 'RECI'), ('NDEB', 'NDEB'), ('NCRE', 'NCRE')], 'Tipo de Documento FEL', copy=False)
-    error_en_historial_fel = fields.Boolean('Registrar error FEL', help='Los errores no se muestran en pantalla, solo se registran en el historial')
+    error_en_historial_fel = fields.Boolean('Error FEL en historial', help='Los errores no se muestran en pantalla, solo se registran en el historial')
     contingencia_fel = fields.Boolean('Habilitar contingencia FEL')
     invoice_reference_type = fields.Selection(selection_add=[('fel', 'FEL')], ondelete=({'fel': 'set default'} if version_info[0] > 13 else ''))
+    no_usar_descuento_fel = fields.Boolean('No usar descuento cuando hay lineas negativas en FEL')
+    enviar_lineas_en_cero_fel = fields.Boolean('Enviar lineas en cero para FEL')
 
 class AccountTax(models.Model):
     _inherit = 'account.tax'
