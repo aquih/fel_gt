@@ -394,11 +394,11 @@ class AccountMove(models.Model):
                 Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FacturaEspecial", NombreComplemento="FacturaEspecial", URIComplemento="http://www.sat.gob.gt/face2/ComplementoFacturaEspecial/0.1.0")
                 RetencionesFacturaEspecial = etree.SubElement(Complemento, CFE_NS+"RetencionesFacturaEspecial", Version="1", nsmap=NSMAP_FE)
                 RetencionISR = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"RetencionISR")
-                RetencionISR.text = str(total_isr)
+                RetencionISR.text = '{:.3f}'.format(total_isr)
                 RetencionIVA = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"RetencionIVA")
-                RetencionIVA.text = str(total_iva_retencion)
+                RetencionIVA.text = '{:.3f}'.format(total_iva_retencion)
                 TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
-                TotalMenosRetenciones.text = str(factura.amount_total)
+                TotalMenosRetenciones.text = '{:.3f}'.format(factura.amount_total)
                 
         if ElementoFrases is not None and len(ElementoFrases) == 0:
             DatosEmision.remove(ElementoFrases)
