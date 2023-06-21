@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-from odoo import models, fields, api, _
+from odoo import models, fields, api, tools, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.release import version_info
 
@@ -95,11 +95,19 @@ class AccountMove(models.Model):
                 factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': 0 }]] })
                 
         if precio_total_descuento > 0:
+            por_descontar = precio_total_descuento
             for linea in factura.invoice_line_ids:
                 if linea.price_unit > 0:
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
                     if factura.journal_id.no_usar_descuento_fel:
-                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (linea.price_unit * (100 - descuento)/100) }]] })
+                        nuevo_precio = (linea.price_unit * (100 - descuento) / 100)
+                        nuevo_precio_total = tools.float_round(nuevo_precio * linea.quantity, precision_rounding=factura.currency_id.rounding, rounding_method='DOWN')
+
+                        descontado = tools.float_round(linea.price_total - nuevo_precio_total, precision_digits=self.env['decimal.precision'].precision_get('Product Price'), rounding_method='DOWN')
+                        descontado = min(descontado, por_descontar)
+
+                        por_descontar -= descontado
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (linea.price_total - descontado) / linea.quantity, 'discount': 0 }]] })
                     else:
                         factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
                     
