@@ -77,7 +77,7 @@ class AccountMove(models.Model):
     def descuento_lineas(self):
         self.ensure_one()
         factura = self
-        
+
         precio_total_descuento = 0
         precio_total_positivo = 0
 
@@ -86,14 +86,14 @@ class AccountMove(models.Model):
         descr = {}
         for linea in factura.invoice_line_ids:
             descr[linea.id] = linea.name
-        
+
         for linea in factura.invoice_line_ids:
             if linea.price_total > 0:
                 precio_total_positivo += linea.price_unit * linea.quantity
             elif linea.price_total < 0:
                 precio_total_descuento += abs(linea.price_total)
                 factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': 0 }]] })
-                
+
         if precio_total_descuento > 0:
             por_descontar = precio_total_descuento
             for linea in factura.invoice_line_ids:
@@ -101,16 +101,17 @@ class AccountMove(models.Model):
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
                     if factura.journal_id.no_usar_descuento_fel:
                         nuevo_precio = (linea.price_unit * (100 - descuento) / 100)
-                        nuevo_precio_total = tools.float_round(nuevo_precio * linea.quantity, precision_rounding=factura.currency_id.rounding, rounding_method='DOWN')
+                        nuevo_precio_total = nuevo_precio * linea.quantity
 
-                        descontado = tools.float_round(linea.price_total - nuevo_precio_total, precision_digits=self.env['decimal.precision'].precision_get('Product Price'), rounding_method='DOWN')
+                        descontado = tools.float_round(linea.price_total - nuevo_precio_total, precision_digits=self.env['decimal.precision'].precision_get('Product Price'), rounding_method='UP')
                         descontado = min(descontado, por_descontar)
 
                         por_descontar -= descontado
-                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (linea.price_total - descontado) / linea.quantity, 'discount': 0 }]] })
+                        precio_descontado = tools.float_round((linea.price_total - descontado) / linea.quantity, precision_digits=self.env['decimal.precision'].precision_get('Product Price'))
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': precio_descontado, 'discount': 0 }]] })
                     else:
                         factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
-                    
+
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
 
