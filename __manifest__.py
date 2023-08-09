@@ -15,6 +15,7 @@
         'views/report_invoice.xml',
     ],
     'demo': [],
-    'installable': True
+    'installable': True,
+    'license': 'Other OSI approved licence',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

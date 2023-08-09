@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-from odoo import models, fields, api, _
+from odoo import models, fields, api, tools, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.release import version_info
 
@@ -38,7 +38,7 @@ class AccountMove(models.Model):
     documento_xml_fel = fields.Binary('Documento XML FEL', copy=False)
     documento_xml_fel_name = fields.Char('Nombre documento XML FEL', default='documento_xml_fel.xml', size=32)
     resultado_xml_fel = fields.Binary('Resultado XML FEL', copy=False)
-    resultado_xml_fel_name = fields.Char('Nombre documento XML FEL', default='resultado_xml_fel.xml', size=32)
+    resultado_xml_fel_name = fields.Char('Nombre resultado XML FEL', default='resultado_xml_fel.xml', size=32)
     certificador_fel = fields.Char('Certificador FEL', copy=False)
     
     def _get_invoice_reference_odoo_fel(self):
@@ -77,7 +77,7 @@ class AccountMove(models.Model):
     def descuento_lineas(self):
         self.ensure_one()
         factura = self
-        
+
         precio_total_descuento = 0
         precio_total_positivo = 0
 
@@ -86,23 +86,32 @@ class AccountMove(models.Model):
         descr = {}
         for linea in factura.invoice_line_ids:
             descr[linea.id] = linea.name
-        
+
         for linea in factura.invoice_line_ids:
             if linea.price_total > 0:
                 precio_total_positivo += linea.price_unit * linea.quantity
             elif linea.price_total < 0:
                 precio_total_descuento += abs(linea.price_total)
                 factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': 0 }]] })
-                
+
         if precio_total_descuento > 0:
+            por_descontar = precio_total_descuento
             for linea in factura.invoice_line_ids:
                 if linea.price_unit > 0:
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
                     if factura.journal_id.no_usar_descuento_fel:
-                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': (linea.price_unit * (100 - descuento)/100) }]] })
+                        nuevo_precio = (linea.price_unit * (100 - descuento) / 100)
+                        nuevo_precio_total = nuevo_precio * linea.quantity
+
+                        descontado = tools.float_round(linea.price_total - nuevo_precio_total, precision_digits=self.env['decimal.precision'].precision_get('Product Price'), rounding_method='UP')
+                        descontado = min(descontado, por_descontar)
+
+                        por_descontar -= descontado
+                        precio_descontado = tools.float_round((linea.price_total - descontado) / linea.quantity, precision_digits=self.env['decimal.precision'].precision_get('Product Price'))
+                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': precio_descontado, 'discount': 0 }]] })
                     else:
                         factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
-                    
+
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
 
@@ -441,11 +450,11 @@ class AccountMove(models.Model):
                 Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="FacturaEspecial", NombreComplemento="FacturaEspecial", URIComplemento="http://www.sat.gob.gt/face2/ComplementoFacturaEspecial/0.1.0")
                 RetencionesFacturaEspecial = etree.SubElement(Complemento, CFE_NS+"RetencionesFacturaEspecial", Version="1", nsmap=NSMAP_FE)
                 RetencionISR = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"RetencionISR")
-                RetencionISR.text = str(total_isr)
+                RetencionISR.text = '{:.3f}'.format(total_isr)
                 RetencionIVA = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"RetencionIVA")
-                RetencionIVA.text = str(total_iva_retencion)
+                RetencionIVA.text = '{:.3f}'.format(total_iva_retencion)
                 TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
-                TotalMenosRetenciones.text = str(factura.amount_total)
+                TotalMenosRetenciones.text = '{:.3f}'.format(factura.amount_total)
                 
         if ElementoFrases is not None and len(ElementoFrases) == 0:
             DatosEmision.remove(ElementoFrases)
