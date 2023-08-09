@@ -4,7 +4,7 @@ from odoo import models, fields, api, tools, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.release import version_info
 
-from lxml import etree
+from lxml import etree, html
 from datetime import datetime
 
 import base64
@@ -116,6 +116,9 @@ class AccountMove(models.Model):
                 linea.name = descr[linea.id]
 
         return True
+
+    def eliminar_etiquetas(self, texto_html):
+        return html.fromstring(texto_html).text_content()
 
     def dte_documento(self):
         self.ensure_one()
