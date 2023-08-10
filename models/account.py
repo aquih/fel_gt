@@ -107,6 +107,9 @@ class AccountMove(models.Model):
                         descontado = min(descontado, por_descontar)
 
                         por_descontar -= descontado
+                        
+                        # Si no se redondea antes de cambiar el precio de la linea, Odoo calcula los impuestos
+                        # con el precio sin redondear, por lo que genera un valor erroneo.
                         precio_descontado = tools.float_round((linea.price_total - descontado) / linea.quantity, precision_digits=self.env['decimal.precision'].precision_get('Product Price'))
                         factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': precio_descontado, 'discount': 0 }]] })
                     else:
