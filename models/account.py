@@ -397,7 +397,7 @@ class AccountMove(models.Model):
 
                 # Version 15, 16
                 if 'tax_totals_json' in factura.fields_get() or 'tax_totals' in factura.fields_get():
-                    invoice_totals = json.loads(factura.tax_totals_json if 'tax_totals_json' in factura.fields_get() else factura.tax_totals)
+                    invoice_totals = json.loads(factura.tax_totals_json) if 'tax_totals_json' in factura.fields_get() else factura.tax_totals
                     for grupos in invoice_totals['groups_by_subtotal'].values():
                         for impuesto in grupos:
                             if impuesto['tax_group_amount'] > 0:
