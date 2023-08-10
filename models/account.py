@@ -4,7 +4,7 @@ from odoo import models, fields, api, tools, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.release import version_info
 
-from lxml import etree
+from lxml import etree, html
 from datetime import datetime
 
 import base64
@@ -116,6 +116,9 @@ class AccountMove(models.Model):
                 linea.name = descr[linea.id]
 
         return True
+
+    def eliminar_etiquetas(self, texto_html):
+        return html.fromstring(texto_html).text_content()
 
     def dte_documento(self):
         self.ensure_one()
@@ -439,9 +442,9 @@ class AccountMove(models.Model):
                         if impuesto[1] > 0:
                             total_iva_retencion += impuesto[1]
 
-                # Version 15    
-                if 'tax_totals_json' in factura.fields_get():
-                    invoice_totals = json.loads(factura.tax_totals_json)
+                # Version 15, 16
+                if 'tax_totals_json' in factura.fields_get() or 'tax_totals' in factura.fields_get():
+                    invoice_totals = json.loads(factura.tax_totals_json if 'tax_totals_json' in factura.fields_get() else factura.tax_totals)
                     for grupos in invoice_totals['groups_by_subtotal'].values():
                         for impuesto in grupos:
                             if impuesto['tax_group_amount'] > 0:
