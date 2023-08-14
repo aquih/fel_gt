@@ -13,6 +13,7 @@
                             <field name="firma_fel"/>
                             <field name="serie_fel"/>
                             <field name="numero_fel"/>
+                            <field name="numero_acceso_fel" readonly="1"/>
                             <field name="factura_original_id"/>
                         </group>
                         <group>
