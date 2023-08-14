@@ -72,7 +72,7 @@
                     </div>
                     
                     <t t-if="o.journal_id.contingencia_fel and o.state == 'draft'">
-                        <br/>Emisión en contingencia, obtenga el DTE Certificado en el sitio www.sat.gob.gt\fel
+                        <br/>Emisión en contingencia, obtenga el DTE Certificado en el sitio www.sat.gob.gt/fel
                     </t>
                     <t t-if="o.firma_fel">
                         <br/>
