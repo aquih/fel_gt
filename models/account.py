@@ -85,6 +85,7 @@ class AccountMove(models.Model):
         # Guardar las descripciones, por que las modificaciones de los precios
         # y descuentos las reinician :(
         descr = {}
+        nuevos_valores_lineas = []
         for linea in factura.invoice_line_ids:
             descr[linea.id] = linea.name
 
@@ -93,12 +94,12 @@ class AccountMove(models.Model):
                 precio_total_positivo += linea.price_unit * linea.quantity
             elif linea.price_total < 0:
                 precio_total_descuento += abs(linea.price_total)
-                factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': 0 }]] })
+                nuevos_valores_lineas.append([1, linea.id, { 'price_unit': 0 }])
 
         if precio_total_descuento > 0:
             por_descontar = precio_total_descuento
             for linea in factura.invoice_line_ids:
-                if linea.price_unit > 0:
+                if linea.price_total > 0:
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
                     if factura.journal_id.no_usar_descuento_fel:
                         nuevo_precio = (linea.price_unit * (100 - descuento) / 100)
@@ -112,10 +113,11 @@ class AccountMove(models.Model):
                         # Si no se redondea antes de cambiar el precio de la linea, Odoo calcula los impuestos
                         # con el precio sin redondear, por lo que genera un valor erroneo.
                         precio_descontado = tools.float_round((linea.price_total - descontado) / linea.quantity, precision_digits=self.env['decimal.precision'].precision_get('Product Price'))
-                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'price_unit': precio_descontado, 'discount': 0 }]] })
+                        nuevos_valores_lineas.append([1, linea.id, { 'price_unit': (linea.price_total - descontado) / linea.quantity, 'discount': 0 }])
                     else:
-                        factura.write({ 'invoice_line_ids': [[1, linea.id, { 'discount': descuento }]] })
+                        nuevos_valores_lineas.append([1, linea.id, { 'discount': descuento }])
 
+            factura.write({ 'invoice_line_ids': nuevos_valores_lineas })
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
 
