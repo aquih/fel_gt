@@ -117,7 +117,10 @@ class AccountMove(models.Model):
                     else:
                         nuevos_valores_lineas.append([1, linea.id, { 'discount': descuento }])
 
-            factura.write({ 'invoice_line_ids': nuevos_valores_lineas })
+            # Algunos módulos pasan skip_invoice_sync=True al confirmar facturas.
+            # Eso causa problemas cuando modificamos los precios. Por ello, nosotros
+            # siempre activamos la sincronizacion.
+            factura.with_context(skip_invoice_sync=False).write({ 'invoice_line_ids': nuevos_valores_lineas })
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
 
