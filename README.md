@@ -1,4 +1,5 @@
 # fel_gt
+Módulo base para Facturación Electrónica en Guatemala. Genera el DTE a partir de una factura. Para integrar con certificadores, es necesario instalar también el módulo fel del certificador.
 
 - Funciona para la versión 13.0, 14.0, 15.0, 16.0
 - El campo de Frases FEL y Adenda FEL en la pestaña Extra de la Compañía ejecutan su contenido como código Python.
