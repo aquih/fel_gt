@@ -231,16 +231,23 @@ class AccountMove(models.Model):
         Departamento.text = factura.partner_id.state_id.name if factura.partner_id.state_id else ''
         Pais = etree.SubElement(DireccionReceptor, DTE_NS+"Pais")
         Pais.text = factura.partner_id.country_id.code or 'GT'
-        
-        ElementoFrases = etree.fromstring(factura.company_id.frases_fel)
+
+        if 'dte:Frases' in factura.company_id.frases_fel:
+            Frases = etree.fromstring(factura.company_id.frases_fel)
+        else:
+            Frases = etree.Element(DTE_NS+'Frases')
+            def frase(tipo=0, escenario=0):
+                etree.SubElement(Frases, DTE_NS+'Frase', TipoFrase=str(tipo), CodigoEscenario=str(escenario))
+            exec(factura.company_id.frases_fel, {'etree': etree, 'Frases': Frases, 'DTE_NS': DTE_NS, 'factura': factura, 'frase': frase})
+            
         if tipo_documento_fel in ['NABN', 'FESP', 'RECI']:
-            frase_isr = ElementoFrases.find('.//*[@TipoFrase="1"]')
+            frase_isr = Frases.find('.//*[@TipoFrase="1"]')
             if frase_isr is not None:
-                ElementoFrases.remove(frase_isr)
-            frase_iva = ElementoFrases.find('.//*[@TipoFrase="2"]')
+                Frases.remove(frase_isr)
+            frase_iva = Frases.find('.//*[@TipoFrase="2"]')
             if frase_iva is not None:
-                ElementoFrases.remove(frase_iva)
-        DatosEmision.append(ElementoFrases)
+                Frases.remove(frase_iva)
+        DatosEmision.append(Frases)
 
         Items = etree.SubElement(DatosEmision, DTE_NS+"Items")
 
@@ -249,6 +256,7 @@ class AccountMove(models.Model):
         gran_total = 0
         gran_total_impuestos = 0
         gran_total_impuestos_timbre = 0
+        gran_num_lineas_sin_impuestos = 0
         cantidad_impuestos = 0
         self.descuento_lineas()
         
@@ -283,7 +291,8 @@ class AccountMove(models.Model):
                         total_impuestos_timbre += i['amount']
                         
             total_linea += total_impuestos_timbre
-            total_lineas_sin_impuestos = 0
+            if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
+                gran_num_lineas_sin_impuestos += 1
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
@@ -307,7 +316,6 @@ class AccountMove(models.Model):
                 CodigoUnidadGravable.text = "1"
                 if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                     CodigoUnidadGravable.text = "2"
-                    total_lineas_sin_impuestos += 1
                 MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
                 MontoGravable.text = '{:.6f}'.format(total_linea_base)
                 MontoImpuesto = etree.SubElement(Impuesto, DTE_NS+"MontoImpuesto")
@@ -340,8 +348,8 @@ class AccountMove(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
-        if tipo_documento_fel not in ['NABN', 'FESP'] and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN' and total_lineas_sin_impuestos > 0:
-            Frase = etree.SubElement(ElementoFrases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
+        if tipo_documento_fel not in ['NABN', 'FESP'] and (factura.company_id.afiliacion_iva_fel or 'GEN') == 'GEN' and gran_num_lineas_sin_impuestos > 0:
+            Frase = etree.SubElement(Frases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
             Adenda = etree.SubElement(SAT, DTE_NS+"Adenda")
@@ -422,8 +430,8 @@ class AccountMove(models.Model):
                 TotalMenosRetenciones = etree.SubElement(RetencionesFacturaEspecial, CFE_NS+"TotalMenosRetenciones")
                 TotalMenosRetenciones.text = '{:.3f}'.format(factura.amount_total)
                 
-        if ElementoFrases is not None and len(ElementoFrases) == 0:
-            DatosEmision.remove(ElementoFrases)
+        if Frases is not None and len(Frases) == 0:
+            DatosEmision.remove(Frases)
 
         # signature = xmlsig.template.create(
         #     xmlsig.constants.TransformInclC14N,
