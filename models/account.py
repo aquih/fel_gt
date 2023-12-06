@@ -103,10 +103,15 @@ class AccountMove(models.Model):
                     descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
                     if factura.journal_id.no_usar_descuento_fel:
                         nuevo_precio = (linea.price_unit * (100 - descuento) / 100)
-                        nuevo_precio_total = factura.currency_id.round(nuevo_precio * linea.quantity)
+                        nuevo_precio_total = tools.float_round(nuevo_precio * linea.quantity, precision_rounding=factura.currency_id.rounding, rounding_method='DOWN')
 
+                        # Por los redondeos, es posible que queden centavos sin descontar;
+                        # causando que la factura quede con un valor distinto al original.
+                        # Éste calculo evita que esos centavos queden de mas.
+                        # Solo funciona si la precisión decimal del precio del procuto es
+                        # mayor o igual a 4.
                         descontado = linea.price_total - nuevo_precio_total
-                        descontado = max(descontado, por_descontar)
+                        descontado = min(descontado, por_descontar)
 
                         por_descontar -= descontado
                         
