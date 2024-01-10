@@ -118,7 +118,7 @@ class AccountMove(models.Model):
                         # Si no se redondea antes de cambiar el precio de la linea, Odoo calcula los impuestos
                         # con el precio sin redondear, por lo que genera un valor erroneo.
                         precio_descontado = tools.float_round((linea.price_total - descontado) / linea.quantity, precision_digits=self.env['decimal.precision'].precision_get('Product Price'))
-                        nuevos_valores_lineas.append([1, linea.id, { 'price_unit': precio_descontado, 'discount': 0 }])
+                        nuevos_valores_lineas.append([1, linea.id, { 'price_unit': precio_descontado, 'discount': 0, 'descontado': descontado }])
                     else:
                         nuevos_valores_lineas.append([1, linea.id, { 'discount': descuento }])
 
@@ -513,6 +513,11 @@ class AccountMove(models.Model):
         DatosGenerales = etree.SubElement(AnulacionDTE, DTE_NS+"DatosGenerales", ID="DatosAnulacion", NumeroDocumentoAAnular=factura.firma_fel, NITEmisor=factura.company_id.vat.replace("-",""), IDReceptor=nit_receptor, FechaEmisionDocumentoAnular=fecha_hora, FechaHoraAnulacion=fecha_hoy_hora, MotivoAnulacion=factura.motivo_fel or '-')
         
         return GTAnulacionDocumento
+
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    descontado = fields.Monetary(string="Descontado", currency_field='company_currency_id')
 
 class AccountJournal(models.Model):
     _inherit = "account.journal"
