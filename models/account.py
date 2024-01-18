@@ -307,11 +307,11 @@ class AccountMove(models.Model):
             Descripcion = etree.SubElement(Item, DTE_NS+"Descripcion")
             Descripcion.text = linea.name
             PrecioUnitario = etree.SubElement(Item, DTE_NS+"PrecioUnitario")
-            PrecioUnitario.text = '{:.6f}'.format(precio_sin_descuento)
+            PrecioUnitario.text = '{:.6f}'.format(precio_sin_descuento + (linea.descontado / linea.quantity))
             Precio = etree.SubElement(Item, DTE_NS+"Precio")
-            Precio.text = '{:.6f}'.format(precio_sin_descuento * linea.quantity)
+            Precio.text = '{:.6f}'.format(precio_sin_descuento * linea.quantity + linea.descontado)
             Descuento = etree.SubElement(Item, DTE_NS+"Descuento")
-            Descuento.text = '{:.6f}'.format(descuento)
+            Descuento.text = '{:.6f}'.format(descuento + linea.descontado)
             if tipo_documento_fel not in ['NABN', 'RECI', 'FPEQ']:
                 Impuestos = etree.SubElement(Item, DTE_NS+"Impuestos")
                 Impuesto = etree.SubElement(Impuestos, DTE_NS+"Impuesto")
