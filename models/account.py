@@ -185,9 +185,11 @@ class AccountMove(models.Model):
         hora = "00:00:00-06:00"
         fecha_hora = fecha+'T'+hora
         numero_acceso = factura.numero_acceso_fel if factura.numero_acceso_fel else str(factura.id+100000000)
-        DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel, NumeroAcceso=numero_acceso)
+        DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel, NumeroAcceso=numero_acceso, TipoPersoneria="733")
         if factura.tipo_gasto == 'importacion':
-            DatosGenerales.attrib['Exp'] = "SI"
+            DatosGenerales.attrib['Exp'] = 'SI'
+        if factura.company_id.tipo_personeria_fel:
+            DatosGenerales.attrib['TipoPersoneria'] = str(factura.company_id.tipo_personeria_fel)
 
         Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA=factura.company_id.afiliacion_iva_fel or "GEN", CodigoEstablecimiento=str(factura.journal_id.codigo_establecimiento), CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
         DireccionEmisor = etree.SubElement(Emisor, DTE_NS+"DireccionEmisor")
@@ -245,7 +247,7 @@ class AccountMove(models.Model):
                 etree.SubElement(Frases, DTE_NS+'Frase', TipoFrase=str(tipo), CodigoEscenario=str(escenario))
             exec(factura.company_id.frases_fel, {'etree': etree, 'Frases': Frases, 'DTE_NS': DTE_NS, 'factura': factura, 'frase': frase})
             
-        if tipo_documento_fel in ['NABN', 'FESP', 'RECI']:
+        if tipo_documento_fel in ['NABN', 'FESP', 'RECI', 'RDON']:
             frase_isr = Frases.find('.//*[@TipoFrase="1"]')
             if frase_isr is not None:
                 Frases.remove(frase_isr)
@@ -312,7 +314,7 @@ class AccountMove(models.Model):
             Precio.text = '{:.6f}'.format(precio_sin_descuento * linea.quantity)
             Descuento = etree.SubElement(Item, DTE_NS+"Descuento")
             Descuento.text = '{:.6f}'.format(descuento)
-            if tipo_documento_fel not in ['NABN', 'RECI', 'FPEQ']:
+            if tipo_documento_fel not in ['NABN', 'RECI', 'RDON', 'FPEQ']:
                 Impuestos = etree.SubElement(Item, DTE_NS+"Impuestos")
                 Impuesto = etree.SubElement(Impuestos, DTE_NS+"Impuesto")
                 NombreCorto = etree.SubElement(Impuesto, DTE_NS+"NombreCorto")
@@ -345,7 +347,7 @@ class AccountMove(models.Model):
             gran_total_impuestos_timbre += total_impuestos_timbre
 
         Totales = etree.SubElement(DatosEmision, DTE_NS+"Totales")
-        if tipo_documento_fel not in ['NABN', 'RECI', 'FPEQ']:
+        if tipo_documento_fel not in ['NABN', 'RECI', 'RDON', 'FPEQ']:
             TotalImpuestos = etree.SubElement(Totales, DTE_NS+"TotalImpuestos")
             TotalImpuesto = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto="IVA", TotalMontoImpuesto='{:.6f}'.format(gran_total_impuestos))
             if not factura.currency_id.is_zero(gran_total_impuestos_timbre):

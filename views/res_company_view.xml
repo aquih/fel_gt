@@ -14,6 +14,7 @@
                                 <group>
                                     <field name="certificador_fel"/>
                                     <field name="afiliacion_iva_fel"/>
+                                    <field name="tipo_personeria_fel"/>
                                     <field name="frases_fel"/>
                                     <field name="adenda_fel"/>
                                 </group>
