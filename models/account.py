@@ -185,7 +185,7 @@ class AccountMove(models.Model):
         hora = "00:00:00-06:00"
         fecha_hora = fecha+'T'+hora
         numero_acceso = factura.numero_acceso_fel if factura.numero_acceso_fel else str(factura.id+100000000)
-        DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel, NumeroAcceso=numero_acceso, TipoPersoneria="733")
+        DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel, NumeroAcceso=numero_acceso)
         if factura.tipo_gasto == 'importacion':
             DatosGenerales.attrib['Exp'] = 'SI'
         if factura.company_id.tipo_personeria_fel:
