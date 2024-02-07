@@ -9,7 +9,7 @@ class ResCompany(models.Model):
 
     certificador_fel = fields.Selection([], 'Certificador FEL')
     afiliacion_iva_fel = fields.Selection([('GEN', 'GEN'), ('PEQ', 'PEQ'), ('EXE', 'EXE')], 'Afiliación IVA FEL', default='GEN')
-    tipo_personeria_fel = fields.Text('Tipo Personeria FEL')
+    tipo_personeria_fel = fields.Char('Tipo Personeria FEL')
     frases_fel = fields.Text('Frases FEL')
     adenda_fel = fields.Text('Adenda FEL')
 
