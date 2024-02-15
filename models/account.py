@@ -355,8 +355,10 @@ class AccountMove(models.Model):
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
-        if tipo_documento_fel not in ['NABN', 'FESP'] and (factura.company_id.afiliacion_iva_fel or 'GEN') != 'PEQ' and gran_num_lineas_sin_impuestos > 0:
-            Frase = etree.SubElement(Frases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
+        # Si no hay frase de exenta de iva configurada en la compañia, poner el escenario ingresado en frase_exento_fel
+        if Frases.find('.//*[@TipoFrase="4"]') is None:
+            if tipo_documento_fel not in ['NABN', 'FESP'] and (factura.company_id.afiliacion_iva_fel or 'GEN') != 'PEQ' and gran_num_lineas_sin_impuestos > 0:
+                Frase = etree.SubElement(Frases, DTE_NS+"Frase", CodigoEscenario=str(factura.frase_exento_fel) if factura.frase_exento_fel else "1", TipoFrase="4")
 
         if factura.company_id.adenda_fel:
             Adenda = etree.SubElement(SAT, DTE_NS+"Adenda")
