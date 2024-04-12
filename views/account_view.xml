@@ -7,9 +7,6 @@
         <field name="inherit_id" ref="l10n_gt_extra.l10n_gt_view_move_form"/>
         <field name="arch" type="xml">
             <data>
-                <button name="button_draft" position="after">
-                    <button name="certificar" id="certificar" string="Certificar FEL" type="object" attrs="{'invisible' : [('firma_fel', '!=', False)]}"/>
-                </button>
                 <xpath expr="//page[@id='invoice_tab']" position="inside">
                     <group>
                         <group>
