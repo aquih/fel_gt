@@ -33,7 +33,7 @@ class AccountMove(models.Model):
     consignatario_fel = fields.Many2one('res.partner', string="Consignatario o Destinatario FEL")
     comprador_fel = fields.Many2one('res.partner', string="Comprador FEL")
     exportador_fel = fields.Many2one('res.partner', string="Exportador FEL")
-    lugar_expedicion_fel = fields.Char(string="Incoterm FEL")
+    lugar_expedicion_fel = fields.Char(string="Lugar Expedición FEL")
     incoterm_fel = fields.Char(string="Incoterm FEL")
     frase_exento_fel = fields.Integer('Fase Exento FEL')
     motivo_fel = fields.Char(string='Motivo FEL')
