@@ -400,8 +400,7 @@ class AccountMove(models.Model):
                 OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
                 OtraReferencia.text = factura.otra_referencia_fel or "-"
                 LugarExpedicion = etree.SubElement(Exportacion, CEX_NS+"LugarExpedicion")
-                LugarExpedicion.text = factura.lugar_expedicion_fel or "-"
-                LugarExpedicion = etree.SubElement(Exportacion, CEX_NS+"LugarExpedicion")
+                
                 LugarExpedicion.text = factura.lugar_expedicion_fel or "-"
                 if len(factura.invoice_line_ids.filtered(lambda l: l.product_id.type != 'service')) > 0:
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
