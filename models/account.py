@@ -33,7 +33,9 @@ class AccountMove(models.Model):
     consignatario_fel = fields.Many2one('res.partner', string="Consignatario o Destinatario FEL")
     comprador_fel = fields.Many2one('res.partner', string="Comprador FEL")
     exportador_fel = fields.Many2one('res.partner', string="Exportador FEL")
+    lugar_expedicion_fel = fields.Char(string="Lugar Expedición FEL")
     incoterm_fel = fields.Char(string="Incoterm FEL")
+    otra_referencia_fel = fields.Char(string="Otra Referencia FEL")
     frase_exento_fel = fields.Integer('Fase Exento FEL')
     motivo_fel = fields.Char(string='Motivo FEL')
     documento_xml_fel = fields.Binary('Documento XML FEL', copy=False)
@@ -393,16 +395,14 @@ class AccountMove(models.Model):
                 NombreConsignatarioODestinatario.text = factura.consignatario_fel.name if factura.consignatario_fel else "-"
                 DireccionConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"DireccionConsignatarioODestinatario")
                 DireccionConsignatarioODestinatario.text = factura.consignatario_fel.street or "-" if factura.consignatario_fel else "-"
-                CodigoConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"CodigoConsignatarioODestinatario")
-                CodigoConsignatarioODestinatario.text = factura.consignatario_fel.ref or "-" if factura.consignatario_fel else "-"
-                NombreComprador = etree.SubElement(Exportacion, CEX_NS+"NombreComprador")
-                NombreComprador.text = factura.comprador_fel.name if factura.comprador_fel else "-"
-                DireccionComprador = etree.SubElement(Exportacion, CEX_NS+"DireccionComprador")
-                DireccionComprador.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
-                CodigoComprador = etree.SubElement(Exportacion, CEX_NS+"CodigoComprador")
-                CodigoComprador.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
+                PaisConsignatario = etree.SubElement(Exportacion, CEX_NS+"PaisConsignatario")
+                PaisConsignatario.text = factura.consignatario_fel.country_id.name or "-" if factura.consignatario_fel else "-"
                 OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
-                OtraReferencia.text = factura.ref or "-"
+                OtraReferencia.text = factura.otra_referencia_fel or "-"
+                LugarExpedicion = etree.SubElement(Exportacion, CEX_NS+"LugarExpedicion")
+                LugarExpedicion.text = factura.lugar_expedicion_fel or "-"
+                LugarExpedicion = etree.SubElement(Exportacion, CEX_NS+"LugarExpedicion")
+                LugarExpedicion.text = factura.lugar_expedicion_fel or "-"
                 if len(factura.invoice_line_ids.filtered(lambda l: l.product_id.type != 'service')) > 0:
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
                     INCOTERM.text = factura.incoterm_fel or "-"
