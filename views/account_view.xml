@@ -31,6 +31,7 @@
                     <field name="exportador_fel" attrs="{'invisible': [('tipo_gasto','!=','importacion')]}"/>
                     <field name="incoterm_fel" attrs="{'invisible': [('tipo_gasto','!=','importacion')]}"/>
                     <field name="lugar_expedicion_fel" attrs="{'invisible': [('tipo_gasto','!=','importacion')]}"/>
+                    <field name="otra_referencia_fel" attrs="{'invisible': [('tipo_gasto','!=','importacion')]}"/>
                 </field>
             </data>
         </field>
