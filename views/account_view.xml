@@ -72,6 +72,7 @@
                         <group string="FEL">
                             <group>
                                 <field name="tipo_impuesto_fel"/>
+                                <field name="codigo_unidad_gravable_fel"/>
                             </group>
                         </group>
                     </page>
