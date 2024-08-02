@@ -264,9 +264,7 @@ class AccountMove(models.Model):
         gran_subtotal = 0
         gran_total = 0
         gran_total_impuestos = 0
-        gran_total_impuestos_timbre = 0
         gran_num_lineas_sin_impuestos = 0
-        cantidad_impuestos = 0
         self.descuento_lineas()
         
         for linea in factura.invoice_line_ids:
@@ -281,20 +279,19 @@ class AccountMove(models.Model):
                 tipo_producto = "S"
             precio_unitario = linea.price_unit * (100-linea.discount) / 100
             precio_sin_descuento = linea.price_unit
-            descuento = precio_sin_descuento * linea.quantity - precio_unitario * linea.quantity
+            descuento = (precio_sin_descuento * linea.quantity) - (precio_unitario * linea.quantity)
             precio_unitario_base = precio_unitario
             if linea.price_total != linea.price_subtotal:
                 precio_unitario_base = linea.price_subtotal / linea.quantity
             total_linea = precio_unitario * linea.quantity
             total_linea_base = precio_unitario_base * linea.quantity
             total_impuestos = total_linea - total_linea_base
-            cantidad_impuestos += len(linea.tax_ids)
             
             total_impuestos_extras = {}
             
             if len(linea.tax_ids) > 1:
                 impuestos = linea.tax_ids.compute_all(precio_unitario, currency=factura.currency_id, quantity=linea.quantity, product=linea.product_id, partner=factura.partner_id)
-                
+
                 for i in impuestos['taxes']:
                     impuesto = self.env['account.tax'].browse(i['id'])
                     if impuesto.tipo_impuesto_fel:
@@ -303,12 +300,13 @@ class AccountMove(models.Model):
                                 'tipo': impuesto.tipo_impuesto_fel,
                                 'codigo': impuesto.codigo_unidad_gravable_fel,
                                 'total': i['amount'],
+                                'base': i['base'],
                             }
-                        else:
-                            total_impuestos_extras[impuesto.tipo_impuesto_fel]['total'] += i['amount']
 
-            for impuesto in total_impuestos_extras.values():
-                total_linea += impuesto['total']
+                        if not impuesto.price_include:
+                            total_linea += i['amount']
+                        else:
+                            total_impuestos -= i['amount']
                 
             if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                 gran_num_lineas_sin_impuestos += 1
@@ -339,14 +337,18 @@ class AccountMove(models.Model):
                 MontoGravable.text = '{:.6f}'.format(total_linea_base)
                 MontoImpuesto = etree.SubElement(Impuesto, DTE_NS+"MontoImpuesto")
                 MontoImpuesto.text = '{:.6f}'.format(total_impuestos)
-                for impuesto in total_impuestos_extras.values(): 
+                for impuesto in total_impuestos_extras.values():
                     Impuesto = etree.SubElement(Impuestos, DTE_NS+"Impuesto")
                     NombreCorto = etree.SubElement(Impuesto, DTE_NS+"NombreCorto")
                     NombreCorto.text = impuesto['tipo']
                     CodigoUnidadGravable = etree.SubElement(Impuesto, DTE_NS+"CodigoUnidadGravable")
-                    CodigoUnidadGravable.text = impuesto['codigo']
-                    MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
-                    MontoGravable.text = '{:.6f}'.format(total_linea_base)
+                    CodigoUnidadGravable.text = str(impuesto['codigo'])
+                    if impuesto['tipo'] != 'PETROLEO':
+                        MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
+                        MontoGravable.text = '{:.6f}'.format(impuesto['total'])
+                    else:
+                        CantidadUnidadesGravables = etree.SubElement(Impuesto, DTE_NS+"CantidadUnidadesGravables")
+                        CantidadUnidadesGravables.text = '{:.{p}f}'.format(linea.quantity, p=self.env['decimal.precision'].precision_get('Product Unit of Measure'))
                     MontoImpuesto = etree.SubElement(Impuesto, DTE_NS+"MontoImpuesto")
                     MontoImpuesto.text = '{:.6f}'.format(impuesto['total'])
                     
@@ -356,14 +358,13 @@ class AccountMove(models.Model):
             gran_total += total_linea
             gran_subtotal += total_linea_base
             gran_total_impuestos += total_impuestos
-            gran_total_impuestos_timbre += total_impuestos_timbre
 
         Totales = etree.SubElement(DatosEmision, DTE_NS+"Totales")
         if tipo_documento_fel not in ['NABN', 'RECI', 'RDON', 'FPEQ']:
             TotalImpuestos = etree.SubElement(Totales, DTE_NS+"TotalImpuestos")
             TotalImpuesto = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto="IVA", TotalMontoImpuesto='{:.6f}'.format(gran_total_impuestos))
-            if not factura.currency_id.is_zero(gran_total_impuestos_timbre):
-                TotalImpuestoTimbre = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto="TIMBRE DE PRENSA", TotalMontoImpuesto='{:.6f}'.format(gran_total_impuestos_timbre))
+            for impuesto in total_impuestos_extras.values():
+                TotalImpuestoExtra = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto=impuesto['tipo'], TotalMontoImpuesto='{:.6f}'.format(impuesto['total']))
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
