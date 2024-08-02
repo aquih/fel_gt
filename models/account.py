@@ -401,6 +401,8 @@ class AccountMove(models.Model):
             if tipo_documento_fel in ['FACT', 'FCAM'] and factura.tipo_gasto == 'importacion':
                 Complemento = etree.SubElement(Complementos, DTE_NS+"Complemento", IDComplemento="text", NombreComplemento="text", URIComplemento="http://www.sat.gob.gt/face2/ComplementoExportaciones/0.1.0")
                 Exportacion = etree.SubElement(Complemento, CEX_NS+"Exportacion", Version="1", nsmap=NSMAP_EXP)
+                LugarExpedicion = etree.SubElement(Exportacion, CEX_NS+"LugarExpedicion")
+                LugarExpedicion.text = factura.lugar_expedicion_fel or "-"
                 NombreConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"NombreConsignatarioODestinatario")
                 NombreConsignatarioODestinatario.text = factura.consignatario_fel.name if factura.consignatario_fel else "-"
                 DireccionConsignatarioODestinatario = etree.SubElement(Exportacion, CEX_NS+"DireccionConsignatarioODestinatario")
@@ -409,9 +411,6 @@ class AccountMove(models.Model):
                 PaisConsignatario.text = factura.consignatario_fel.country_id.name or "-" if factura.consignatario_fel else "-"
                 OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
                 OtraReferencia.text = factura.otra_referencia_fel or "-"
-                LugarExpedicion = etree.SubElement(Exportacion, CEX_NS+"LugarExpedicion")
-                
-                LugarExpedicion.text = factura.lugar_expedicion_fel or "-"
                 if len(factura.invoice_line_ids.filtered(lambda l: l.product_id.type != 'service')) > 0:
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
                     INCOTERM.text = factura.incoterm_fel or "-"
