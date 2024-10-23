@@ -176,7 +176,7 @@ class AccountMove(models.Model):
 
         tipo_documento_fel = factura.journal_id.tipo_documento_fel
         tipo_interno_factura = factura.type if 'type' in factura.fields_get() else factura.move_type
-        if tipo_documento_fel in ['FACT', 'FACM'] and tipo_interno_factura == 'out_refund':
+        if tipo_documento_fel in ['FACT', 'FCAM'] and tipo_interno_factura == 'out_refund':
             tipo_documento_fel = 'NCRE'
 
         moneda = "GTQ"
