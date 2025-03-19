@@ -289,7 +289,7 @@ class AccountMove(models.Model):
                 precio_unitario_base = linea.price_subtotal / linea.quantity
             total_linea = precio_unitario * linea.quantity
             total_linea_base = precio_unitario_base * linea.quantity
-            total_impuestos = total_linea - total_linea_base
+            total_impuestos = tools.float_round(total_linea - total_linea_base, precision_rounding=factura.currency_id.rounding)
             
             total_impuestos_extras = {}
             
