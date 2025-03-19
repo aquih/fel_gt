@@ -353,7 +353,7 @@ class AccountMove(models.Model):
                     CodigoUnidadGravable.text = str(impuesto['codigo'])
                     if impuesto['tipo'] != 'PETROLEO':
                         MontoGravable = etree.SubElement(Impuesto, DTE_NS+"MontoGravable")
-                        MontoGravable.text = '{:.6f}'.format(impuesto['total'])
+                        MontoGravable.text = '{:.6f}'.format(impuesto['base'])
                     else:
                         CantidadUnidadesGravables = etree.SubElement(Impuesto, DTE_NS+"CantidadUnidadesGravables")
                         CantidadUnidadesGravables.text = '{:.{p}f}'.format(linea.quantity, p=self.env['decimal.precision'].precision_get('Product Unit of Measure'))
