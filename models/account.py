@@ -371,6 +371,13 @@ class AccountMove(models.Model):
             TotalImpuesto = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto="IVA", TotalMontoImpuesto='{:.6f}'.format(gran_total_impuestos))
             for impuesto in gran_total_impuestos_extras.values():
                 TotalImpuestoExtra = etree.SubElement(TotalImpuestos, DTE_NS+"TotalImpuesto", NombreCorto=impuesto['tipo'], TotalMontoImpuesto='{:.6f}'.format(impuesto['total']))
+
+        # Ajuste de centavos para que el GranTotal del DTE coincida exactamente con el amount_total de la factura en Odoo
+        # Esto evita errores de diferencia de Q0.01 por redondeos internos en precios unitarios.
+        if not factura.currency_id.is_zero(factura.amount_total - gran_total):
+            diferencia = factura.amount_total - gran_total
+            gran_total += diferencia
+
         GranTotal = etree.SubElement(Totales, DTE_NS+"GranTotal")
         GranTotal.text = '{:.6f}'.format(gran_total)
 
