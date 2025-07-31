@@ -5,7 +5,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.release import version_info
 
 from lxml import etree, html
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import base64
 import requests
@@ -186,7 +186,7 @@ class AccountMove(models.Model):
             moneda = "USD"
 
         fecha = factura.invoice_date.strftime('%Y-%m-%d') if factura.invoice_date else fields.Date.context_today(self).strftime('%Y-%m-%d')
-        hora = fields.Datetime.now().strftime('%T')+"-00:00"
+        hora = (datetime.now() - timedelta(hours=6)).strftime('%T')+"-06:00"
         fecha_hora = fecha+'T'+hora
         DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel)
         if factura.journal_id.contingencia_fel and factura.contingencia_fel:
