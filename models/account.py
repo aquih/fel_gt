@@ -186,7 +186,7 @@ class AccountMove(models.Model):
             moneda = "USD"
 
         fecha = factura.invoice_date.strftime('%Y-%m-%d') if factura.invoice_date else fields.Date.context_today(self).strftime('%Y-%m-%d')
-        hora = "00:00:00-06:00"
+        hora = fields.Datetime.now().strftime('%T')+"-00:00"
         fecha_hora = fecha+'T'+hora
         DatosGenerales = etree.SubElement(DatosEmision, DTE_NS+"DatosGenerales", CodigoMoneda=moneda, FechaHoraEmision=fecha_hora, Tipo=tipo_documento_fel)
         if factura.journal_id.contingencia_fel and factura.contingencia_fel:
