@@ -271,7 +271,7 @@ class AccountMove(models.Model):
         gran_num_lineas_sin_impuestos = 0
         self.descuento_lineas()
         
-        for linea in factura.invoice_line_ids.sorted(key=lambda r: r.sequence):
+        for linea in factura.invoice_line_ids.filtered(lambda l: l.display_type == 'product').sorted(key=lambda r: r.sequence):
 
             if factura.currency_id.is_zero(linea.price_total) and not factura.journal_id.enviar_lineas_en_cero_fel:
                 continue
@@ -423,7 +423,7 @@ class AccountMove(models.Model):
                 PaisConsignatario.text = factura.consignatario_fel.country_id.name or "-" if factura.consignatario_fel else "-"
                 OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
                 OtraReferencia.text = factura.otra_referencia_fel or "-"
-                if len(factura.invoice_line_ids.filtered(lambda l: l.product_id.type != 'service')) > 0:
+                if len(factura.invoice_line_ids.filtered(lambda l: l.display_type == 'product').filtered(lambda l: l.product_id.type != 'service')) > 0:
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
                     INCOTERM.text = factura.incoterm_fel or "-"
                 NombreExportador = etree.SubElement(Exportacion, CEX_NS+"NombreExportador")
