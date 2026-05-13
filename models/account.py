@@ -279,7 +279,7 @@ class AccountMove(models.Model):
             linea_num += 1
 
             tipo_producto = "B"
-            if linea.product_id.type == 'service':
+            if linea.product_id.type == 'service' or linea.is_downpayment:
                 tipo_producto = "S"
             
             precio_unitario = linea.price_unit * (100-linea.discount) / 100
