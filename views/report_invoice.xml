@@ -1,105 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <template id="report_invoice_document" inherit_id="account.report_invoice_document">
-            <div id="payment_term" position="before">
-                <div t-if="o.journal_id.generar_fel">
-                                        
-                    <div class="row">
-                        <div class="col">
-                            <address t-field="o.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
-                            <div t-if="o.company_id.vat">NIT: <span t-field="o.company_id.vat"/></div>
-                        </div>
-                        <div class="col">
-                            <address t-field="o.journal_id.direccion" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
-                        </div>
-                    </div>
-                    
-                    <div class="mt-2">
-                        Documento Tributario Electrónico FEL:
-                        <t t-if="o.journal_id.tipo_documento_fel in [1,'FACT']">
-                            Factura
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [2,'FCAM']">
-                            Factura Cambiaria
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [3,'FPEQ']">
-                            Factura Pequeño Contribuyente
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [4,'FCAP']">
-                            Factura Cambiaria Pequeño Contribuyente
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [5,'FESP']">
-                            Factura Especial
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [6,'NABN']">
-                            Nota de Abono 
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [7,'RDON']">
-                            Recibo por Donación 
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [8,'RECI']">
-                            Recibo 
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [9,'NDEB']">
-                            Nota de Débito
-                        </t>
-                        <t t-if="o.journal_id.tipo_documento_fel in [10,'NCRE']">
-                            Nota de Crédito
-                        </t>
-                    </div>
 
-                    <t t-if="o.contingencia_fel">
-                        <div>Documento en Contingencia</div>
-                        <div>Número de Acceso: <span t-esc="o.numero_acceso_fel"/></div>
+    <template id="report_invoice_document" inherit_id="account.report_invoice_document">
+        <div id="payment_term" position="before">
+            <div t-if="o.journal_id.generar_fel">
+                                    
+                <div class="row">
+                    <div class="col">
+                        <address t-field="o.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                        <div t-if="o.company_id.vat">NIT: <span t-field="o.company_id.vat"/></div>
+                    </div>
+                    <div class="col">
+                        <address t-field="o.journal_id.direccion" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                    </div>
+                </div>
+                
+                <div class="mt-2">
+                    Documento Tributario Electrónico FEL:
+                    <t t-if="o.journal_id.tipo_documento_fel in [1,'FACT']">
+                        Factura
                     </t>
-                    <t t-if="not o.contingencia_fel">
-                        <div>Serie FEL: <span t-field="o.serie_fel"/>   Número FEL: <span t-field="o.numero_fel"/></div>
-                        <div>Número de Autorización: <span t-field="o.firma_fel"/></div>
-                        <div>Fecha de Emisión: <span t-field="o.invoice_date"/></div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [2,'FCAM']">
+                        Factura Cambiaria
                     </t>
-                    
-                    <t t-if="o.journal_id.tipo_documento_fel in [9,'NDEB'] or o.journal_id.tipo_documento_fel in [10,'NCRE']">
-                        <t t-if="o.factura_original_id">
-                            <div>Factura Asociada: Serie FEL <span t-field="o.factura_original_id.serie_fel"/>, Número FEL: <span t-field="o.factura_original_id.numero_fel"/>, Fecha de Emisión: <span t-field="o.factura_original_id.invoice_date"/></div>
-                        </t>
+                    <t t-if="o.journal_id.tipo_documento_fel in [3,'FPEQ']">
+                        Factura Pequeño Contribuyente
                     </t>
-                    <div>Sujeto a pagos trimestrales ISR</div>
-                    <div>Certificador:</div>
-                    <t t-if="o.certificador_fel == 'infile' or not o.certificador_fel">
-                        <div>INFILE, S.A.</div>
-                        <div>NIT: 12521337</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [4,'FCAP']">
+                        Factura Cambiaria Pequeño Contribuyente
                     </t>
-                    <t t-if="o.certificador_fel == 'g4s'">
-                        <div>G4S DOCUMENTA, S. A.</div>
-                        <div>NIT: 60010207</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [5,'FESP']">
+                        Factura Especial
                     </t>
-                    <t t-if="o.certificador_fel == 'gom'">
-                        <div>GOM SOLUTIONS, SOCIEDAD ANONIMA</div>
-                        <div>NIT: 95189416</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [6,'NABN']">
+                        Nota de Abono 
                     </t>
-                    <t t-if="o.certificador_fel == 'ecofactura'">
-                        <div>ECO-FACTURAS</div>
-                        <div>NIT: 64281167</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [7,'RDON']">
+                        Recibo por Donación 
                     </t>
-                    <t t-if="o.certificador_fel == 'digifact'">
-                        <div>DIGIFACT SERVICIOS, SOCIEDAD ANONIMA</div>
-                        <div>NIT: 77454820</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [8,'RECI']">
+                        Recibo 
                     </t>
-                    <t t-if="o.certificador_fel == 'ccg'">
-                        <div>Cámara de Comercio de Guatemala</div>
-                        <div>NIT: 351598</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [9,'NDEB']">
+                        Nota de Débito
                     </t>
-                    <t t-if="o.certificador_fel == 'megaprint'">
-                        <div>MEGAPRINT, S.A.</div>
-                        <div>NIT: 50510231</div>
-                    </t>
-                    <t t-if="o.certificador_fel == 'totaldoc'">
-                        <div>Grupo CDS, S.A.</div>
-                        <div>NIT: 107902281</div>
+                    <t t-if="o.journal_id.tipo_documento_fel in [10,'NCRE']">
+                        Nota de Crédito
                     </t>
                 </div>
+
+                <t t-if="o.contingencia_fel">
+                    <div>Documento en Contingencia</div>
+                    <div>Número de Acceso: <span t-esc="o.numero_acceso_fel"/></div>
+                </t>
+                <t t-if="not o.contingencia_fel">
+                    <div>Serie FEL: <span t-field="o.serie_fel"/>   Número FEL: <span t-field="o.numero_fel"/></div>
+                    <div>Número de Autorización: <span t-field="o.firma_fel"/></div>
+                    <div>Fecha de Emisión: <span t-field="o.invoice_date"/></div>
+                </t>
+                
+                <t t-if="o.journal_id.tipo_documento_fel in [9,'NDEB'] or o.journal_id.tipo_documento_fel in [10,'NCRE']">
+                    <t t-if="o.factura_original_id">
+                        <div>Factura Asociada: Serie FEL <span t-field="o.factura_original_id.serie_fel"/>, Número FEL: <span t-field="o.factura_original_id.numero_fel"/>, Fecha de Emisión: <span t-field="o.factura_original_id.invoice_date"/></div>
+                    </t>
+                </t>
+                <div>Sujeto a pagos trimestrales ISR</div>
+                <div>Certificador:</div>
+                <t t-if="o.certificador_fel == 'infile' or not o.certificador_fel">
+                    <div>INFILE, S.A.</div>
+                    <div>NIT: 12521337</div>
+                </t>
+                <t t-if="o.certificador_fel == 'g4s'">
+                    <div>G4S DOCUMENTA, S. A.</div>
+                    <div>NIT: 60010207</div>
+                </t>
+                <t t-if="o.certificador_fel == 'gom'">
+                    <div>GOM SOLUTIONS, SOCIEDAD ANONIMA</div>
+                    <div>NIT: 95189416</div>
+                </t>
+                <t t-if="o.certificador_fel == 'ecofactura'">
+                    <div>ECO-FACTURAS</div>
+                    <div>NIT: 64281167</div>
+                </t>
+                <t t-if="o.certificador_fel == 'digifact'">
+                    <div>DIGIFACT SERVICIOS, SOCIEDAD ANONIMA</div>
+                    <div>NIT: 77454820</div>
+                </t>
+                <t t-if="o.certificador_fel == 'ccg'">
+                    <div>Cámara de Comercio de Guatemala</div>
+                    <div>NIT: 351598</div>
+                </t>
+                <t t-if="o.certificador_fel == 'megaprint'">
+                    <div>MEGAPRINT, S.A.</div>
+                    <div>NIT: 50510231</div>
+                </t>
+                <t t-if="o.certificador_fel == 'totaldoc'">
+                    <div>Grupo CDS, S.A.</div>
+                    <div>NIT: 107902281</div>
+                </t>
             </div>
-        </template>
-    </data>
+        </div>
+    </template>
+
 </odoo>
