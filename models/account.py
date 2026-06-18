@@ -322,9 +322,12 @@ class AccountMove(models.Model):
             if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                 gran_num_lineas_sin_impuestos += 1
 
+            # El nombre cambió entre versiones
+            precision_unidades = max(self.env['decimal.precision'].precision_get('Product Unit of Measure'), self.env['decimal.precision'].precision_get('Product Unit'))
+
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
-            Cantidad.text = '{:.{p}f}'.format(linea.quantity, p=self.env['decimal.precision'].precision_get('Product Unit of Measure'))
+            Cantidad.text = '{:.{p}f}'.format(linea.quantity, p=precision_unidades)
             UnidadMedida = etree.SubElement(Item, DTE_NS+"UnidadMedida")
             UnidadMedida.text = linea.product_uom_id.name[0:3] if linea.product_uom_id else 'UNI'
             Descripcion = etree.SubElement(Item, DTE_NS+"Descripcion")
