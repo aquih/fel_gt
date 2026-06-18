@@ -324,6 +324,9 @@ class AccountMove(models.Model):
 
             # El nombre cambió entre versiones
             precision_unidades = max(self.env['decimal.precision'].precision_get('Product Unit of Measure'), self.env['decimal.precision'].precision_get('Product Unit'))
+            
+            # Quitar el producto de la descripción enviada. Si un usuario cambia la descripción, es por que quiere mandar solo eso a FEL.
+            descripcion = linea.name.replace(f'{linea.product_id.display_name}\n', '', 1) if linea.name != linea.product_id.display_name else linea.name
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
@@ -331,7 +334,7 @@ class AccountMove(models.Model):
             UnidadMedida = etree.SubElement(Item, DTE_NS+"UnidadMedida")
             UnidadMedida.text = linea.product_uom_id.name[0:3] if linea.product_uom_id else 'UNI'
             Descripcion = etree.SubElement(Item, DTE_NS+"Descripcion")
-            Descripcion.text = linea.name
+            Descripcion.text = descripcion
             PrecioUnitario = etree.SubElement(Item, DTE_NS+"PrecioUnitario")
             PrecioUnitario.text = '{:.6f}'.format(precio_sin_descuento)
             Precio = etree.SubElement(Item, DTE_NS+"Precio")
