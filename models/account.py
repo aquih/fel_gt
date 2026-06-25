@@ -30,7 +30,7 @@ class AccountMove(models.Model):
     numero_fel = fields.Char('Numero FEL', copy=False)
     numero_acceso_fel = fields.Integer('Numero Acceso FEL', copy=False)
     contingencia_fel = fields.Boolean('Contingencia FEL', copy=False)
-    factura_original_id = fields.Many2one('account.move', string='Factura original FEL', domain="[('invoice_date', '!=', False)]")
+    factura_original_id = fields.Many2one('account.move', string='Factura Original FEL', domain="[('invoice_date', '!=', False)]")
     consignatario_fel = fields.Many2one('res.partner', string='Consignatario o Destinatario FEL')
     exportador_fel = fields.Many2one('res.partner', string='Exportador FEL')
     lugar_expedicion_fel = fields.Char(string='Lugar Expedición FEL')
@@ -325,8 +325,10 @@ class AccountMove(models.Model):
             # El nombre cambió entre versiones
             precision_unidades = max(self.env['decimal.precision'].precision_get('Product Unit of Measure'), self.env['decimal.precision'].precision_get('Product Unit'))
             
-            # Quitar el producto de la descripción enviada. Si un usuario cambia la descripción, es por que quiere mandar solo eso a FEL.
-            descripcion = linea.name.replace(f'{linea.product_id.display_name}\n', '', 1) if linea.name != linea.product_id.display_name else linea.name
+            descripcion = linea.name
+            param_no_enviar_producto_en_descripcion = self.env['ir.config_parameter'].sudo().get_param('fel_gt.no_enviar_producto_en_descripcion')
+            if param_no_enviar_producto_en_descripcion:
+                descripcion = linea.name.replace(f'{linea.product_id.display_name}\n', '', 1) if linea.name != linea.product_id.display_name else linea.name
 
             Item = etree.SubElement(Items, DTE_NS+"Item", BienOServicio=tipo_producto, NumeroLinea=str(linea_num))
             Cantidad = etree.SubElement(Item, DTE_NS+"Cantidad")
