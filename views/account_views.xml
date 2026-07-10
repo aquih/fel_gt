@@ -44,7 +44,7 @@
         <field name="arch" type="xml">
             <data>
                 <page name="extra" position="inside">
-                    <group string="FEL GT">
+                    <group string="FEL Guatemala" invisible="type not in ['sale', 'purchase']">
                         <group>
                             <field name="generar_fel"/>
                             <field name="tipo_documento_fel"/>
@@ -68,7 +68,7 @@
             <data>
                 <notebook position="inside">
                     <page string="Extra">
-                        <group string="FEL">
+                        <group string="FEL Guatemala">
                             <group>
                                 <field name="tipo_impuesto_fel"/>
                                 <field name="codigo_unidad_gravable_fel"/>
