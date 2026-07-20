@@ -2,18 +2,10 @@
 <odoo>
 
     <template id="report_invoice_document" inherit_id="account.report_invoice_document">
-        <div id="payment_term" position="before">
+        <div id="payment_term" position="inside">
             <div t-if="o.journal_id.generar_fel">
-                                    
-                <div class="row">
-                    <div class="col">
-                        <address t-field="o.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
-                        <div t-if="o.company_id.vat">NIT: <span t-field="o.company_id.vat"/></div>
-                    </div>
-                    <div class="col">
-                        <address t-field="o.journal_id.direccion" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
-                    </div>
-                </div>
+                
+                <address t-field="o.journal_id.direccion" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
                 
                 <div class="mt-2">
                     Documento Tributario Electrónico FEL:
