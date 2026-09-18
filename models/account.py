@@ -282,10 +282,9 @@ class AccountMove(models.Model):
                 tipo_producto = 'S'
             else:
                 tipo_producto = 'B'
-            
-            precio_unitario = linea.price_unit * (100-linea.discount) / 100
+
+            precio_unitario = linea.price_unit * (100 - linea.discount) / 100
             precio_sin_descuento = linea.price_unit
-            descuento = (precio_sin_descuento * linea.quantity) - (precio_unitario * linea.quantity)
 
             impuestos = linea.tax_ids.compute_all(precio_unitario, currency=factura.currency_id, quantity=linea.quantity, product=linea.product_id, partner=factura.partner_id)
 
@@ -307,6 +306,9 @@ class AccountMove(models.Model):
                                     'total': i['amount'],
                                     'base': i['base'],
                                 }
+                                if i['price_include']:
+                                    precio_sin_descuento -= i['amount'] / linea.quantity
+                                    precio_unitario -= i['amount'] / linea.quantity
 
                             if impuesto.tipo_impuesto_fel not in gran_total_impuestos_extras:
                                 gran_total_impuestos_extras[impuesto.tipo_impuesto_fel] = { 'tipo': impuesto.tipo_impuesto_fel, 'total': 0 }
@@ -320,6 +322,8 @@ class AccountMove(models.Model):
                         elif i['amount'] < 0:
                             total_linea += abs(i['amount'])
                 
+            descuento = (precio_sin_descuento * linea.quantity) - (precio_unitario * linea.quantity)
+            
             if factura.currency_id.is_zero(total_impuestos) and total_linea != 0:
                 gran_num_lineas_sin_impuestos += 1
 

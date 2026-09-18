@@ -1,6 +1,6 @@
 {
     'name': 'FEL Guatemala',
-    'version': '1.26',
+    'version': '1.27',
     'category': 'Custom',
     'description': """ Campos y funciones base para la facturación electrónica en Guatemala """,
     'author': 'aquíH',
