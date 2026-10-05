@@ -297,30 +297,29 @@ class AccountMove(models.Model):
             if len(linea.tax_ids) > 0:
                 for i in impuestos['taxes']:
                     impuesto = self.env['account.tax'].browse(i['id'])
-                    if not factura.currency_id.is_zero(i['amount']):
-                        if impuesto.tipo_impuesto_fel and impuesto.tipo_impuesto_fel != 'IVA':
-                            if impuesto.tipo_impuesto_fel not in total_impuestos_extras:
-                                total_impuestos_extras[impuesto.tipo_impuesto_fel] = {
-                                    'tipo': impuesto.tipo_impuesto_fel,
-                                    'codigo': impuesto.codigo_unidad_gravable_fel,
-                                    'total': i['amount'],
-                                    'base': i['base'],
-                                }
-                                if i['price_include']:
-                                    precio_sin_descuento -= i['amount'] / linea.quantity
-                                    precio_unitario -= i['amount'] / linea.quantity
+                    if impuesto.tipo_impuesto_fel and impuesto.tipo_impuesto_fel != 'IVA':
+                        if impuesto.tipo_impuesto_fel not in total_impuestos_extras:
+                            total_impuestos_extras[impuesto.tipo_impuesto_fel] = {
+                                'tipo': impuesto.tipo_impuesto_fel,
+                                'codigo': impuesto.codigo_unidad_gravable_fel,
+                                'total': i['amount'],
+                                'base': i['base'],
+                            }
+                            if i['price_include']:
+                                precio_sin_descuento -= i['amount'] / linea.quantity
+                                precio_unitario -= i['amount'] / linea.quantity
 
-                            if impuesto.tipo_impuesto_fel not in gran_total_impuestos_extras:
-                                gran_total_impuestos_extras[impuesto.tipo_impuesto_fel] = { 'tipo': impuesto.tipo_impuesto_fel, 'total': 0 }
-                            gran_total_impuestos_extras[impuesto.tipo_impuesto_fel]['total'] += i['amount']
-                        
-                        # Si es IVA
-                        elif i['amount'] > 0:
-                            total_impuestos += i['amount']
+                        if impuesto.tipo_impuesto_fel not in gran_total_impuestos_extras:
+                            gran_total_impuestos_extras[impuesto.tipo_impuesto_fel] = { 'tipo': impuesto.tipo_impuesto_fel, 'total': 0 }
+                        gran_total_impuestos_extras[impuesto.tipo_impuesto_fel]['total'] += i['amount']
+                    
+                    # Si es IVA
+                    elif i['amount'] > 0:
+                        total_impuestos += i['amount']
 
-                        # Las retenciones se deben sumar al total de la linea
-                        elif i['amount'] < 0:
-                            total_linea += abs(i['amount'])
+                    # Las retenciones se deben sumar al total de la linea
+                    elif i['amount'] < 0:
+                        total_linea += abs(i['amount'])
                 
             descuento = (precio_sin_descuento * linea.quantity) - (precio_unitario * linea.quantity)
             
