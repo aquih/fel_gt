@@ -199,7 +199,7 @@ class AccountMove(models.Model):
         Emisor = etree.SubElement(DatosEmision, DTE_NS+"Emisor", AfiliacionIVA=factura.company_id.afiliacion_iva_fel or "GEN", CodigoEstablecimiento=str(factura.journal_id.codigo_establecimiento), CorreoEmisor=factura.company_id.email or '', NITEmisor=factura.company_id.vat.replace('-',''), NombreComercial=factura.journal_id.direccion.name, NombreEmisor=factura.company_id.name)
         DireccionEmisor = etree.SubElement(Emisor, DTE_NS+"DireccionEmisor")
         Direccion = etree.SubElement(DireccionEmisor, DTE_NS+"Direccion")
-        Direccion.text = " ".join([x for x in (factura.journal_id.street, factura.journal_id.street2) if x]).strip() or 'Ciudad'        
+        Direccion.text = " ".join([x for x in (factura.journal_id.direccion.street, factura.journal_id.direccion.street2) if x]).strip() or 'Ciudad'        
         CodigoPostal = etree.SubElement(DireccionEmisor, DTE_NS+"CodigoPostal")
         CodigoPostal.text = factura.journal_id.direccion.zip or '01001'
         Municipio = etree.SubElement(DireccionEmisor, DTE_NS+"Municipio")
