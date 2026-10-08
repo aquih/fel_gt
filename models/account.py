@@ -3,6 +3,7 @@
 from odoo import models, fields, api, tools, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.release import version_info
+from odoo.tools import str2bool
 
 from lxml import etree, html
 from datetime import datetime
@@ -330,7 +331,7 @@ class AccountMove(models.Model):
             precision_unidades = max(self.env['decimal.precision'].precision_get('Product Unit of Measure'), self.env['decimal.precision'].precision_get('Product Unit'))
             
             descripcion = linea.name
-            param_no_enviar_producto_en_descripcion = self.env['ir.config_parameter'].sudo().get_param('fel_gt.no_enviar_producto_en_descripcion')
+            param_no_enviar_producto_en_descripcion = str2bool(self.env['ir.config_parameter'].sudo().get_param('fel_gt.no_enviar_producto_en_descripcion', False))
             if param_no_enviar_producto_en_descripcion:
                 descripcion = linea.name.replace(f'{linea.product_id.display_name}\n', '', 1) if linea.name != linea.product_id.display_name else linea.name
 
