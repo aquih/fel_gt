@@ -436,9 +436,9 @@ class AccountMove(models.Model):
                 PaisConsignatario.text = factura.consignatario_fel.country_id.name or "-" if factura.consignatario_fel else "-"
                 OtraReferencia = etree.SubElement(Exportacion, CEX_NS+"OtraReferencia")
                 OtraReferencia.text = factura.otra_referencia_fel or "-"
-                if len(factura.invoice_line_ids.filtered(lambda l: l.display_type == 'product').filtered(lambda l: l.product_id.type != 'service')) > 0:
+                if len(factura.invoice_line_ids.filtered(lambda l: l.display_type == 'product').filtered(lambda l: l.tipo_producto_sat != 'servicio')) > 0:
                     INCOTERM = etree.SubElement(Exportacion, CEX_NS+"INCOTERM")
-                    INCOTERM.text = factura.incoterm_fel or "-"
+                    INCOTERM.text = factura.incoterm_fel
                 NombreExportador = etree.SubElement(Exportacion, CEX_NS+"NombreExportador")
                 NombreExportador.text = factura.exportador_fel.name if factura.exportador_fel else "-"
                 CodigoExportador = etree.SubElement(Exportacion, CEX_NS+"CodigoExportador")
