@@ -81,6 +81,8 @@ class AccountMove(models.Model):
         return False
 
     def descuento_lineas(self):
+        AccountMove = self.env['account.move']
+
         self.ensure_one()
         factura = self
 
@@ -127,10 +129,11 @@ class AccountMove(models.Model):
                     else:
                         nuevos_valores_lineas.append([1, linea.id, { 'discount': descuento }])
 
-            # Algunos módulos pasan skip_invoice_sync=True al confirmar facturas.
-            # Eso causa problemas cuando modificamos los precios. Por ello, nosotros
-            # siempre activamos la sincronizacion.
-            factura.with_context(skip_invoice_sync=False).write({ 'invoice_line_ids': nuevos_valores_lineas })
+            # No sé realmente qué efecto tiene skip_invoice_sync, pero point_of_sale lo usa así
+            # entonces nosotros también.
+            with AccountMove._check_balanced({'records': factura}):
+                factura.with_context(skip_invoice_sync=True).write({ 'invoice_line_ids': nuevos_valores_lineas })
+
             for linea in factura.invoice_line_ids:
                 linea.name = descr[linea.id]
 
