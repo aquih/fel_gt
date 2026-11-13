@@ -86,7 +86,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         factura = self
 
-        precio_total_descuento = 0
+        precio_total_negativo = 0
         precio_total_positivo = 0
 
         # Guardar las descripciones, por que las modificaciones de los precios
@@ -98,16 +98,18 @@ class AccountMove(models.Model):
 
         for linea in factura.invoice_line_ids:
             if linea.price_total > 0:
-                precio_total_positivo += linea.price_unit * linea.quantity
+                precio_total_positivo += linea.price_total
             elif linea.price_total < 0:
-                precio_total_descuento += abs(linea.price_total)
+                precio_total_negativo += abs(linea.price_total)
                 nuevos_valores_lineas.append([1, linea.id, { 'price_unit': 0 }])
 
-        if precio_total_descuento > 0:
-            por_descontar = precio_total_descuento
+        if precio_total_negativo > 0:
+            proporcion = precio_total_negativo / precio_total_positivo
+            por_descontar = precio_total_negativo
             for linea in factura.invoice_line_ids:
                 if linea.price_total > 0:
-                    descuento = (precio_total_descuento / precio_total_positivo) * 100 + linea.discount
+                    combinados = (1 - linea.discount/100) * (1 - proporcion)
+                    descuento = 100 - combinados * 100
                     if factura.journal_id.no_usar_descuento_fel:
                         nuevo_precio = (linea.price_unit * (100 - descuento) / 100)
                         nuevo_precio_total = tools.float_round(nuevo_precio * linea.quantity, precision_rounding=factura.currency_id.rounding, rounding_method='DOWN')
